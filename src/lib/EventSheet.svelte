@@ -126,17 +126,18 @@
 <style>
   form { display: flex; flex-direction: column; gap: 16px; }
   .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .row { display: flex; gap: 12px; align-items: flex-end; }
-  .grow { flex: 1; }
+  .row { display: flex; gap: 12px; align-items: flex-end; min-width: 0; }
+  .row > * { min-width: 0; }
+  .grow { flex: 1 1 0; min-width: 0; }
   label, .label { font-size: 13px; font-weight: 500; color: var(--text-2); }
   input[type='text'], input[type='date'], input[type='time'], textarea {
-    width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid #d1d1d6; border-radius: 12px;
+    width: 100%; min-width: 0; height: 48px; padding: 0 14px; border: 1px solid #d1d1d6; border-radius: 12px;
     font: inherit; font-size: 17px; color: var(--text); background: var(--surface);
   }
-  textarea { padding: 12px 14px; line-height: 24px; resize: none; }
+  textarea { height: auto; padding: 12px 14px; line-height: 24px; resize: none; }
   input:focus-visible, textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: -1px; border-color: transparent; }
-  .check { display: flex; align-items: center; gap: 8px; height: 48px; font-size: 16px; color: var(--text); font-weight: 400; }
-  .check input { width: 22px; height: 22px; accent-color: var(--text); }
+  .check { display: flex; flex: none; align-items: center; gap: 8px; height: 48px; font-size: 16px; color: var(--text); font-weight: 400; white-space: nowrap; }
+  .check input { width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--text); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip {
     height: 44px; padding: 0 16px; border: 1.5px solid transparent; border-radius: 22px;

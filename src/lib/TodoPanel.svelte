@@ -103,7 +103,7 @@
   .edit { width: 100%; padding: 6px 0; display: flex; flex-direction: column; gap: 4px; }
   .edit input[type='text'] { border: 1px solid #d1d1d6; border-radius: 10px; padding: 0 10px; }
   .line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .line input[type='date'] { height: 40px; border: 1px solid #d1d1d6; border-radius: 10px; padding: 0 8px; font: inherit; font-size: 14px; }
+  .line input[type='date'] { min-width: 0; max-width: 100%; height: 40px; border: 1px solid #d1d1d6; border-radius: 10px; padding: 0 8px; font: inherit; font-size: 14px; }
   .link { min-height: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--blue); font-size: 14px; }
   .link.danger { color: var(--red); margin-left: auto; }
 </style>
