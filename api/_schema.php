@@ -90,7 +90,7 @@ function ip_schema()
                 'start_time' => ['time', true],
                 'end_time' => ['time', true],
                 'all_day' => ['bool'],
-                'category' => ['enum', ['sermon', 'worship', 'visit', 'personal']],
+                'category' => ['enum', ['sermon', 'worship', 'dept', 'visit', 'personal']],
                 'repeat_rule' => ['enum', ['none', 'weekly', 'monthly', 'yearly']],
                 'alarm' => ['enum', ['none', 'at', '10m', '1h', '1d']],
                 'memo' => ['str', 5000],

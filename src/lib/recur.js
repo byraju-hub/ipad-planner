@@ -1,5 +1,6 @@
 // 반복 일정 펼치기. 일정은 하나만 저장하고, 보이는 기간에 해당하는 날짜를 계산한다.
 import { addDays, parseKey, makeKey, daysInMonth } from './dates.js';
+import { catRank } from './categories.js';
 
 const MAX_SPAN = 60; // 며칠짜리 일정까지 허용할지(안전 장치)
 
@@ -54,9 +55,10 @@ export function occurrenceStarts(ev, from, to) {
   return out;
 }
 
+// 하루 안의 순서: 분류(설교 → 교회 → 부서 → 미팅 → 개인)가 먼저, 같은 분류 안에서는 종일 → 시간순 → 제목
 function sortKey(o) {
   const allDay = o.ev.all_day || !o.ev.start_time || o.span > 0;
-  return (allDay ? '0' : '1') + (o.ev.start_time || '') + '|' + (o.ev.title || '');
+  return String(catRank(o.ev.category)).padStart(2, '0') + '|' + (allDay ? '0' : '1') + (o.ev.start_time || '') + '|' + (o.ev.title || '');
 }
 
 // 날짜 → 그날의 일정 목록. 며칠짜리 일정은 각 날짜에 모두 들어간다.

@@ -51,6 +51,22 @@ test('날짜별 정렬: 종일이 먼저, 그다음 시간순', () => {
   assert.equal(occLabel(day[0]), '종일');
 });
 
+test('하루 안의 순서는 분류가 먼저: 설교 → 교회 → 부서 → 미팅 → 개인', () => {
+  const mk = (id, category, extra = {}) => ev({ id, title: id, category, ...extra });
+  const list = [
+    mk('개인', 'personal', { start_time: '06:00' }),
+    mk('미팅', 'visit', { all_day: 1, start_time: null }),
+    mk('부서', 'dept', { start_time: '23:00' }),
+    mk('교회', 'worship', { start_time: '19:00' }),
+    mk('설교', 'sermon', { start_time: '22:00' }),
+  ];
+  const day = buildDayMap(list, '2026-12-06', '2026-12-06').get('2026-12-06');
+  assert.deepEqual(day.map((o) => o.ev.title), ['설교', '교회', '부서', '미팅', '개인']);
+  // 같은 분류 안에서는 종일 → 시간순
+  const same = buildDayMap([mk('b', 'worship', { start_time: '19:30' }), mk('a', 'worship', { start_time: '07:00' }), mk('c', 'worship', { all_day: 1, start_time: null })], '2026-12-06', '2026-12-06').get('2026-12-06');
+  assert.deepEqual(same.map((o) => o.ev.title), ['c', 'a', 'b']);
+});
+
 test('삭제된 일정은 나오지 않는다', () => {
   assert.equal(buildDayMap([ev({ deleted: 1 })], '2026-12-01', '2026-12-31').size, 0);
 });
