@@ -5,13 +5,14 @@ import { diag } from './diag.svelte.js';
 
 const GRACE = 600; // 펜슬이 떨어진 뒤에도 이 시간(ms) 동안은 손바닥으로 본다
 const STALE = 2500; // 펜슬 닿음 기록이 이보다 오래 갱신되지 않으면 놓친 것으로 보고 버린다
-const CLICK_BLOCK = 500;
+const CLICK_WINDOW = 120; // 손바닥을 뗀 직후 이 시간(ms) 안에 오는 클릭만 막는다
+const TAP_SLOP = 8; // px. 이보다 덜 움직인 터치는 '톡' 누른 것이므로 스크롤 차단을 하지 않는다(차단하면 클릭이 안 생긴다)
 
 const penDown = new Map(); // pointerId → 마지막 이벤트 시각
 const palmIds = new Set();
+const touchStart = new Map(); // touch identifier → 시작 좌표
 let lastContact = -Infinity;
-let blockClickUntil = -Infinity;
-let lastDownType = '';
+let lastUp = { at: -Infinity, palm: false };
 
 const now = () => performance.now();
 
@@ -36,23 +37,19 @@ function onPointer(e) {
     const contact = e.type === 'pointerdown' || e.buttons > 0 || e.pressure > 0;
     if (e.type === 'pointerdown') {
       penDown.set(e.pointerId, now());
-      lastDownType = 'pen';
     } else if (end) {
       penDown.delete(e.pointerId);
       lastContact = now();
+      lastUp = { at: now(), palm: false };
     } else if (contact && penDown.has(e.pointerId)) {
       penDown.set(e.pointerId, now());
     }
     if (contact) lastContact = now();
     return;
   }
-  if (e.pointerType !== 'touch') {
-    if (e.type === 'pointerdown') lastDownType = e.pointerType;
-    return;
-  }
+  if (e.pointerType !== 'touch') return;
 
   if (e.type === 'pointerdown') {
-    lastDownType = 'touch';
     if (penNear()) {
       palmIds.add(e.pointerId);
       swallow(e, false); // 포인터 이벤트는 앱에만 전달하지 않는다(기본 동작을 막으면 iOS 가 입력 처리를 바꿀 수 있다)
@@ -65,27 +62,38 @@ function onPointer(e) {
   if (palmIds.has(e.pointerId)) {
     if (end) {
       palmIds.delete(e.pointerId);
-      blockClickUntil = now() + CLICK_BLOCK;
+      lastUp = { at: now(), palm: true };
     }
     swallow(e, false);
+  } else if (end) {
+    lastUp = { at: now(), palm: false };
   }
 }
 
-// iOS 는 손바닥·손가락의 움직임을 스크롤이나 확대로 처리하면서 진행 중인 펜슬 입력을 취소하기도 한다.
+// 손바닥을 뗄 때 생기는 클릭(버튼·칸이 눌리는 것)만 막는다. 직전에 뗀 것이 펜슬이나 손가락이면 통과시킨다
+function onClick(e) {
+  if (lastUp.palm && now() - lastUp.at < CLICK_WINDOW) swallow(e);
+}
+
+// ---- iOS 는 손바닥·손가락의 움직임을 스크롤이나 확대로 처리하면서 진행 중인 펜슬 입력을 취소하기도 한다 ----
 // 펜슬이 쓰이는 동안(또는 스타일러스 터치)에는 touchmove 의 기본 동작을 막아 그런 처리를 시작하지 못하게 한다.
-// 스크롤이 필요한 곳(창, 넘치는 목록, 입력칸)은 제외한다. 손가락만 쓸 때는 건드리지 않아 탭에는 영향이 없다.
+// 단, 거의 움직이지 않은 터치(탭)는 막지 않는다: 막으면 iOS 가 클릭을 만들지 않아 버튼이 눌리지 않는다.
+// 스크롤이 필요한 곳(창, 넘치는 목록, 입력칸)도 제외한다. 손가락만 쓸 때는 건드리지 않는다.
+function onTouchStart(e) {
+  for (const t of e.changedTouches) touchStart.set(t.identifier, { x: t.clientX, y: t.clientY });
+}
+function onTouchEnd(e) {
+  for (const t of e.changedTouches) touchStart.delete(t.identifier);
+}
 function onTouchMove(e) {
   if (!e.cancelable) return;
   const t = e.changedTouches && e.changedTouches[0];
-  const stylus = t && t.touchType === 'stylus';
-  if (!stylus && !penNear()) return;
+  if (!t) return;
+  if (t.touchType !== 'stylus' && !penNear()) return;
+  const s = touchStart.get(t.identifier);
+  if (s && Math.hypot(t.clientX - s.x, t.clientY - s.y) < TAP_SLOP) return; // 탭
   if (e.target?.closest?.('.sheet, input, textarea, select, ul[style*="pan-y"]')) return;
   e.preventDefault();
-}
-
-// 손바닥을 뗄 때 생기는 클릭(버튼·칸이 눌리는 것)을 막는다. 펜슬로 톡 누른 클릭은 통과시킨다
-function onClick(e) {
-  if (now() < blockClickUntil && lastDownType === 'touch' && e.pointerType !== 'pen') swallow(e);
 }
 
 export function installPalmRejection() {
@@ -93,5 +101,8 @@ export function installPalmRejection() {
     window.addEventListener(type, onPointer, true);
   }
   window.addEventListener('click', onClick, true);
+  document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
+  document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
+  document.addEventListener('touchcancel', onTouchEnd, { passive: true, capture: true });
   document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
 }

@@ -1,5 +1,6 @@
 <script>
   import Sheet from './Sheet.svelte';
+  import PickerField from './PickerField.svelte';
   import { CATEGORIES, REPEATS, ALARMS } from './categories.js';
   import { saveEvent, removeEvent, newEvent } from './data.svelte.js';
   import { closeSheet } from './ui.svelte.js';
@@ -50,7 +51,7 @@
     <div class="row">
       <div class="field grow">
         <label for="ev-date">날짜</label>
-        <input id="ev-date" type="date" min={MIN_DATE} bind:value={f.start_date} />
+        <PickerField id="ev-date" type="date" min={MIN_DATE} bind:value={f.start_date} />
       </div>
       <label class="check">
         <input type="checkbox" checked={!!f.all_day} onchange={(e) => (f.all_day = e.currentTarget.checked ? 1 : 0)} />
@@ -61,17 +62,17 @@
     {#if f.all_day}
       <div class="field">
         <label for="ev-end-date">종료일 (며칠짜리 일정이면)</label>
-        <input id="ev-end-date" type="date" min={f.start_date} bind:value={f.end_date} />
+        <PickerField id="ev-end-date" type="date" min={f.start_date} bind:value={f.end_date} />
       </div>
     {:else}
       <div class="row">
         <div class="field grow">
           <label for="ev-start">시작</label>
-          <input id="ev-start" type="time" bind:value={f.start_time} />
+          <PickerField id="ev-start" type="time" bind:value={f.start_time} />
         </div>
         <div class="field grow">
           <label for="ev-end">종료</label>
-          <input id="ev-end" type="time" bind:value={f.end_time} />
+          <PickerField id="ev-end" type="time" clearable placeholder="없음" bind:value={f.end_time} />
         </div>
       </div>
     {/if}
@@ -130,7 +131,7 @@
   .row > * { min-width: 0; }
   .grow { flex: 1 1 0; min-width: 0; }
   label, .label { font-size: 13px; font-weight: 500; color: var(--text-2); }
-  input[type='text'], input[type='date'], input[type='time'], textarea {
+  input[type='text'], textarea {
     width: 100%; min-width: 0; height: 48px; padding: 0 14px; border: 1px solid #d1d1d6; border-radius: 12px;
     font: inherit; font-size: 17px; color: var(--text); background: var(--surface);
   }

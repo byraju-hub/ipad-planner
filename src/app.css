@@ -24,16 +24,6 @@ html, body { touch-action: none; position: fixed; inset: 0; width: 100%; overflo
 body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 input, textarea { -webkit-user-select: text; user-select: text; touch-action: manipulation; }
 
-/* 날짜·시간 입력칸: iOS Safari 기본 모양은 최소 너비와 가운데 정렬 때문에 칸을 밀어낸다 */
-input[type='date'], input[type='time'] {
-  -webkit-appearance: none; appearance: none;
-  display: block; min-width: 0; max-width: 100%; margin: 0;
-  text-align: left; line-height: normal;
-}
-input[type='date']::-webkit-date-and-time-value, input[type='time']::-webkit-date-and-time-value {
-  text-align: left; min-width: 0; margin: 0;
-}
-input[type='date']::-webkit-datetime-edit, input[type='time']::-webkit-datetime-edit { padding: 0; }
 
 body {
   margin: 0;

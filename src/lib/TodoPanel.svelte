@@ -2,6 +2,7 @@
   import { data, newTodo, saveTodo, removeTodo, toggleTodo } from './data.svelte.js';
   import Icon from './Icon.svelte';
   import { scrollable } from './scrollable.js';
+  import PickerField from './PickerField.svelte';
   import { parseKey } from './dates.js';
 
   // range: 이 기간에 기한이 있는 할 일 + 기한 없는 미완료 할 일을 보여준다
@@ -54,7 +55,7 @@
           <form class="edit" onsubmit={(e) => { e.preventDefault(); finishEdit(); }}>
             <input type="text" aria-label="할 일 제목" bind:value={edit.title} maxlength="200" />
             <div class="line">
-              <input type="date" aria-label="기한" bind:value={edit.due} />
+              <PickerField type="date" compact ariaLabel="기한" placeholder="기한 없음" bind:value={edit.due} />
               <button type="button" class="link press" onclick={() => (edit.due = null)}>기한 없음</button>
               <button type="button" class="link danger press" onclick={del}>삭제</button>
               <button type="submit" class="link press">완료</button>
@@ -103,7 +104,6 @@
   .edit { width: 100%; padding: 6px 0; display: flex; flex-direction: column; gap: 4px; }
   .edit input[type='text'] { border: 1px solid #d1d1d6; border-radius: 10px; padding: 0 10px; }
   .line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .line input[type='date'] { min-width: 0; max-width: 100%; height: 40px; border: 1px solid #d1d1d6; border-radius: 10px; padding: 0 8px; font: inherit; font-size: 14px; }
-  .link { min-height: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--blue); font-size: 14px; }
+    .link { min-height: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--blue); font-size: 14px; }
   .link.danger { color: var(--red); margin-left: auto; }
 </style>

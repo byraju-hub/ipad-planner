@@ -3,6 +3,7 @@
   import { OPINION_STATUS, statusOf } from './categories.js';
   import { parseKey } from './dates.js';
   import { scrollable } from './scrollable.js';
+  import PickerField from './PickerField.svelte';
 
   // 처리 전(새 의견·검토 중)이거나 이 기간에 들은 의견을 보여준다
   let { title = '의견', range } = $props();
@@ -61,7 +62,7 @@
           <form class="edit" onsubmit={(e) => { e.preventDefault(); finishEdit(); }}>
             <textarea aria-label="의견 내용" rows="3" bind:value={edit.content} maxlength="5000"></textarea>
             <input type="text" aria-label="들은 곳" placeholder="누가·어디서" bind:value={edit.source} maxlength="100" />
-            <input type="date" aria-label="들은 날짜" bind:value={edit.heard_on} />
+            <PickerField type="date" compact ariaLabel="들은 날짜" bind:value={edit.heard_on} />
             <div class="line">
               <button type="button" class="link danger press" onclick={del}>삭제</button>
               <button type="submit" class="link press">완료</button>
