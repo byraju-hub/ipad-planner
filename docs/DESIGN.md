@@ -33,12 +33,13 @@
 
 ```
 아이패드 Safari (홈 화면에 추가 → 전체 화면 실행)
-  └─ 정적 파일: index.html, app.js, app.css, manifest.json, 아이콘
+  └─ Svelte 앱 (Vite로 빌드한 정적 파일), manifest.json, 아이콘
        └─ 기기 안 저장소 (IndexedDB): 오프라인에서도 열리고 쓰기 가능
             └─ 동기화 ⇅  cafe24: PHP API + MySQL
 ```
 
-- 프런트: 빌드 도구 없는 순수 HTML/CSS/JS. FTP로 올리면 끝난다.
+- 프런트: **Svelte 5 + Vite** 정적 빌드. 빌드한 `dist/` 폴더만 FTP로 올린다. 화면 전환은 주소의 `#`(해시) 방식이라 cafe24 서버 설정이 필요 없다. 손글씨 캔버스는 순수 JavaScript로 직접 짠다.
+- 서버 코드와 앱 코드는 분리한다: `src/`(앱), `api/`(PHP), `docs/`(문서).
 - 서버: cafe24 웹호스팅 기본 제공인 PHP + MySQL(MariaDB).
 - 홈 화면 아이콘: `manifest.json`, `apple-touch-icon`, `apple-mobile-web-app-capable` 메타 태그.
 - 오프라인: 서비스 워커로 화면 파일을 캐시하고, 변경분은 온라인이 되면 서버로 보낸다. 충돌은 나중에 쓴 쪽이 이긴다 (혼자 쓰므로 충분).
