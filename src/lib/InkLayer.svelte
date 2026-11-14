@@ -26,6 +26,8 @@
   let rect = null;
   let suppressClick = false;
   let lastMoveAt = 0;
+  let lastCancelled = null; // 브라우저가 취소해서 끊긴 획의 끝점과 시각(곧바로 이어지는 입력과 이어 붙이는 용도)
+  const STITCH_MS = 250;
   let cw = 0;
   let ch = 0;
 
@@ -162,9 +164,18 @@
     }
     rect = host.getBoundingClientRect(); // 쓰기 시작할 때 한 번만 잰다(움직일 때마다 재지 않는다)
     const [x, y] = toLogical(e);
+    const first = [round(x, 1), round(y, 1), round(e.pressure || 0.5, 2)];
+    const points = [first];
+    let drawn = 1;
+    // 직전 획이 브라우저의 취소로 끊겼고 바로 이어 쓰는 거라면, 끊긴 끝점에서 이어 붙여 선이 끊겨 보이지 않게 한다
+    if (pen && lastCancelled && performance.now() - lastCancelled.at < STITCH_MS && lastCancelled.color === tool.color && tool.mode === 'pen') {
+      points.unshift(lastCancelled.pt);
+      if (diag.on) diag.stitched++;
+    }
+    lastCancelled = null;
     cur = {
-      id: e.pointerId, cx: e.clientX, cy: e.clientY, started: false, threshold: pen ? PEN_THRESHOLD : OTHER_THRESHOLD,
-      stroke: { c: tool.color, w: BASE_W, p: [[round(x, 1), round(y, 1), round(e.pressure || 0.5, 2)]] },
+      id: e.pointerId, cx: e.clientX, cy: e.clientY, started: false, threshold: pen ? PEN_THRESHOLD : OTHER_THRESHOLD, drawn,
+      stroke: { c: tool.color, w: BASE_W, p: points },
     };
   }
 
@@ -178,7 +189,6 @@
       return;
     }
     const s = cur.stroke;
-    const from = s.p.length;
     for (const e of list) {
       const [x, y] = toLogical(e);
       s.p.push([round(x, 1), round(y, 1), round(e.pressure > 0 ? e.pressure : 0.5, 2)]);
@@ -187,8 +197,9 @@
     const dpr = canvas.width / cw;
     c.save();
     c.scale(dpr, dpr);
-    for (let i = from; i < s.p.length; i++) drawSegment(c, s, i);
+    for (let i = Math.max(cur.drawn, 1); i < s.p.length; i++) drawSegment(c, s, i);
     c.restore();
+    cur.drawn = s.p.length;
   }
 
   function onMove(e) {
@@ -235,6 +246,10 @@
 
   function onUp(e) {
     if (!cur || e.pointerId !== cur.id) return;
+    if (e.type === 'pointercancel' && e.pointerType === 'pen' && cur.started && tool.mode === 'pen') {
+      const pts = cur.stroke.p;
+      lastCancelled = { at: performance.now(), pt: pts[pts.length - 1], color: cur.stroke.c };
+    }
     if (diag.on && e.pointerType === 'pen') {
       if (e.type === 'pointercancel') {
         diag.cancel++;

@@ -22,9 +22,9 @@ function activePens() {
 }
 export const penNear = () => activePens() > 0 || now() - lastContact < GRACE;
 
-function swallow(e) {
+function swallow(e, prevent = true) {
   e.stopImmediatePropagation();
-  if (e.cancelable) e.preventDefault();
+  if (prevent && e.cancelable) e.preventDefault();
   if (diag.on) diag.palm++;
 }
 
@@ -55,7 +55,7 @@ function onPointer(e) {
     lastDownType = 'touch';
     if (penNear()) {
       palmIds.add(e.pointerId);
-      swallow(e);
+      swallow(e, false); // 포인터 이벤트는 앱에만 전달하지 않는다(기본 동작을 막으면 iOS 가 입력 처리를 바꿀 수 있다)
     }
     return;
   }
@@ -67,8 +67,20 @@ function onPointer(e) {
       palmIds.delete(e.pointerId);
       blockClickUntil = now() + CLICK_BLOCK;
     }
-    swallow(e);
+    swallow(e, false);
   }
+}
+
+// iOS 는 손바닥·손가락의 움직임을 스크롤이나 확대로 처리하면서 진행 중인 펜슬 입력을 취소하기도 한다.
+// 펜슬이 쓰이는 동안(또는 스타일러스 터치)에는 touchmove 의 기본 동작을 막아 그런 처리를 시작하지 못하게 한다.
+// 스크롤이 필요한 곳(창, 넘치는 목록, 입력칸)은 제외한다. 손가락만 쓸 때는 건드리지 않아 탭에는 영향이 없다.
+function onTouchMove(e) {
+  if (!e.cancelable) return;
+  const t = e.changedTouches && e.changedTouches[0];
+  const stylus = t && t.touchType === 'stylus';
+  if (!stylus && !penNear()) return;
+  if (e.target?.closest?.('.sheet, input, textarea, select, ul[style*="pan-y"]')) return;
+  e.preventDefault();
 }
 
 // 손바닥을 뗄 때 생기는 클릭(버튼·칸이 눌리는 것)을 막는다. 펜슬로 톡 누른 클릭은 통과시킨다
@@ -81,4 +93,5 @@ export function installPalmRejection() {
     window.addEventListener(type, onPointer, true);
   }
   window.addEventListener('click', onClick, true);
+  document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
 }
