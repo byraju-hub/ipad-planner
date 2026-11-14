@@ -34,10 +34,38 @@
     if (n < 0 && !canGoPrev(route.view, route.key)) return;
     go(route.view, n < 0 ? prevKey(route.view, route.key) : nextKey(route.view, route.key));
   }
+
+  // 밀 때 화면이 손가락을 따라오고, 놓으면 밀려 나간 뒤 다음 화면이 들어온다. 못 넘기면 제자리로 돌아온다
+  let stageEl = $state(null);
+  let busy = false;
+  const OUT_MS = 150;
+  const apply = (x, opacity, ms) => {
+    if (!stageEl) return;
+    stageEl.style.transition = ms ? `transform ${ms}ms cubic-bezier(0.23, 1, 0.32, 1), opacity ${ms}ms ease-out` : 'none';
+    stageEl.style.transform = x ? `translate3d(${x}px, 0, 0)` : '';
+    stageEl.style.opacity = opacity < 1 ? String(opacity) : '';
+  };
+  function drag(dx) {
+    if (busy) return;
+    const blocked = dx > 0 && !canGoPrev(route.view, route.key); // 첫 달 앞에는 더 못 간다: 고무줄처럼 살짝만
+    const x = blocked ? dx * 0.2 : dx;
+    apply(x, 1 - Math.min(Math.abs(x) / 900, 0.35), 0);
+  }
+  function release({ commit, sign }) {
+    if (busy) return;
+    if (!commit || (sign > 0 && !canGoPrev(route.view, route.key))) return apply(0, 1, 260);
+    if (reduceMotion) return step(sign > 0 ? -1 : 1);
+    busy = true;
+    apply(sign * 90, 0, OUT_MS);
+    setTimeout(() => {
+      busy = false;
+      step(sign > 0 ? -1 : 1);
+    }, OUT_MS);
+  }
   const swipeOptions = () => ({
-    enabled: () => !ui.sheet && !tool.finger,
-    onprev: () => step(-1),
-    onnext: () => step(1),
+    enabled: () => !ui.sheet && !tool.finger && !busy,
+    ondrag: drag,
+    onend: release,
   });
 
   // 로그인된 뒤에만 기기 데이터를 읽고 동기화한다
@@ -80,7 +108,7 @@
     <Header view={route.view} key={route.key} {go} />
     <main use:swipe={swipeOptions()}>
       {#key route.view + periodRange(route.view, route.key).start}
-        <div class="stage" in:fly={{ x: dir * 48, duration: reduceMotion ? 0 : 220, easing: cubicOut }}>
+        <div class="stage" bind:this={stageEl} in:fly={{ x: dir * 70, duration: reduceMotion ? 0 : 280, easing: cubicOut }}>
           {#if route.view === 'year'}
             <YearView key={route.key} {go} />
           {:else if route.view === 'month'}
