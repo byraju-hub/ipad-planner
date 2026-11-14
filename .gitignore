@@ -4,3 +4,4 @@ dist/
 .env.*
 api/config.php
 *.log
+.admin-password.txt

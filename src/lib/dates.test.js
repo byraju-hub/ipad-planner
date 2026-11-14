@@ -21,14 +21,15 @@ test('2026년 12월 달력은 11월 29일(주일)에 시작하고 5줄이다', (
 });
 
 test('사용 시작일 이전으로는 갈 수 없다', () => {
-  assert.equal(MIN_DATE, '2026-12-01');
-  assert.equal(clampKey('2026-11-14'), '2026-12-01');
-  assert.equal(canGoPrev('month', '2026-12-01'), false);
-  assert.equal(canGoPrev('month', '2027-01-01'), true);
-  assert.equal(canGoPrev('year', '2026-12-01'), false);
+  assert.equal(MIN_DATE, '2026-11-01');
+  assert.equal(clampKey('2026-10-14'), '2026-11-01');
+  assert.equal(clampKey('2026-11-14'), '2026-11-14');
+  assert.equal(canGoPrev('month', '2026-11-01'), false);
+  assert.equal(canGoPrev('month', '2026-12-01'), true);
+  assert.equal(canGoPrev('year', '2026-11-01'), false);
   assert.equal(canGoPrev('year', '2027-03-01'), true);
-  assert.equal(canGoPrev('week', '2026-12-01'), false); // 11/22–11/28 주는 전부 이전
-  assert.equal(canGoPrev('week', '2026-12-06'), true); // 11/29–12/5 주는 12/1 이후가 걸쳐 있다
+  assert.equal(canGoPrev('week', '2026-11-01'), false); // 10/25–10/31 주는 전부 이전
+  assert.equal(canGoPrev('week', '2026-11-08'), true); // 11/1–11/7 주
 });
 
 test('이동: 연말·연초', () => {
@@ -55,7 +56,7 @@ test('주간 제목', () => {
 test('공휴일 2026년 12월 ~ 2027년', () => {
   assert.equal(holidayName('2026-12-25'), '성탄절');
   assert.equal(holidayName('2027-01-01'), '신정');
-  // 2027년 설날은 한국 시간 기준 2월 7일(일요일). 삭이 2/7 0시대라 중국(2/6)과 하루 다르다
+  // 2027년 설날은 한국 기준 2월 7일(일요일). 삭이 한국 시간 2/7 0시대라 중국(2/6)과 하루 다르다
   assert.equal(holidayName('2027-02-06'), '설날 연휴');
   assert.equal(holidayName('2027-02-07'), '설날');
   assert.equal(holidayName('2027-02-08'), '설날 연휴');
@@ -71,4 +72,19 @@ test('공휴일 2026년 12월 ~ 2027년', () => {
   assert.equal(holidayName('2027-10-11'), '대체공휴일'); // 한글날이 토요일
   assert.equal(holidayName('2027-12-27'), '대체공휴일'); // 성탄절이 토요일
   assert.equal(holidaysOf(2027).size, 20);
+});
+
+test('2028년 이후도 계산된다: 음력 공휴일과 겹침', () => {
+  assert.equal(holidayName('2028-01-27'), '설날'); // 한국 기준 1/27(중국은 1/26)
+  assert.equal(holidayName('2028-05-02'), '부처님오신날');
+  // 추석(10/3)이 개천절과 겹쳐 대체공휴일이 생긴다
+  assert.equal(holidayName('2028-10-03'), '추석·개천절');
+  assert.equal(holidayName('2028-10-02'), '추석 연휴');
+  assert.equal(holidayName('2028-10-04'), '추석 연휴');
+  assert.equal(holidayName('2028-10-05'), '대체공휴일');
+  assert.equal(holidayName('2029-02-13'), '설날');
+  assert.equal(holidayName('2029-09-22'), '추석');
+  assert.equal(holidayName('2030-02-03'), '설날'); // 일요일 → 연휴 다음 날 대체
+  assert.equal(holidayName('2030-02-05'), '대체공휴일');
+  assert.equal(holidayName('2030-09-12'), '추석');
 });

@@ -1,5 +1,10 @@
 <script>
   import { periodTitle, prevKey, nextKey, canGoPrev, switchKey, today, clampKey } from './dates.js';
+  import { tool, setTool, COLORS, inkState, undoInk } from './ink.svelte.js';
+  import { openEvent, openSettings, defaultDate } from './ui.svelte.js';
+  import { sync } from './sync.svelte.js';
+  import { auth } from './auth.svelte.js';
+  import Icon from './Icon.svelte';
 
   let { view, key, go } = $props();
 
@@ -9,9 +14,18 @@
     ['week', '주간'],
   ];
   const label = { year: '해', month: '달', week: '주' };
+  const colorName = { '#1d1d1f': '검정', '#1f3fa6': '파랑', '#d70015': '빨강' };
 
   let title = $derived(periodTitle(view, key));
   let prevOk = $derived(canGoPrev(view, key));
+  let syncLabel = $derived(
+    auth.status === 'local' ? '개발 모드'
+    : sync.status === 'syncing' ? '동기화 중'
+    : sync.status === 'offline' ? '오프라인'
+    : sync.status === 'error' ? '동기화 오류'
+    : '동기화됨',
+  );
+  let syncTone = $derived(sync.status === 'error' ? 'bad' : sync.status === 'offline' || sync.status === 'syncing' ? 'warn' : 'ok');
 </script>
 
 <header>
@@ -21,13 +35,9 @@
       {#if title.sub}<span class="sub">{title.sub}</span>{/if}
     </h1>
     <button class="icon press" aria-label={`이전 ${label[view]}`} disabled={!prevOk}
-      onclick={() => go(view, prevKey(view, key))}>
-      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4 6.5 10l6 6" /></svg>
-    </button>
+      onclick={() => go(view, prevKey(view, key))}><Icon name="left" size={20} /></button>
     <button class="icon press" aria-label={`다음 ${label[view]}`}
-      onclick={() => go(view, nextKey(view, key))}>
-      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4l6 6-6 6" /></svg>
-    </button>
+      onclick={() => go(view, nextKey(view, key))}><Icon name="right" size={20} /></button>
     <button class="today press" onclick={() => go(view, clampKey(today()))}>오늘</button>
   </div>
 
@@ -38,57 +48,82 @@
     {/each}
   </nav>
 
-  <div class="right"></div>
+  <div class="right">
+    <div class="tools" role="group" aria-label="손글씨 도구">
+      {#each COLORS as c}
+        <button class="dot" aria-label={`${colorName[c]} 펜`} aria-pressed={tool.mode === 'pen' && tool.color === c}
+          onclick={() => setTool({ mode: 'pen', color: c })}>
+          <span style={`background:${c}`}></span>
+        </button>
+      {/each}
+      <button class="icon press" class:on={tool.mode === 'eraser'} aria-label="지우개" aria-pressed={tool.mode === 'eraser'}
+        onclick={() => setTool({ mode: tool.mode === 'eraser' ? 'pen' : 'eraser' })}><Icon name="eraser" /></button>
+      <button class="icon press" aria-label="되돌리기" disabled={!inkState.canUndo} onclick={undoInk}><Icon name="undo" /></button>
+      <button class="icon press" class:on={tool.finger} aria-label="손가락으로도 쓰기" aria-pressed={tool.finger}
+        title="손가락·마우스로도 쓰기 (애플 펜슬은 항상 쓰기)" onclick={() => setTool({ finger: !tool.finger })}><Icon name="touch" /></button>
+    </div>
+    <button class="sync" aria-label={syncLabel} title={syncLabel} onclick={openSettings}><span class={syncTone}></span></button>
+    <button class="add press" onclick={() => openEvent(null, defaultDate(view, key))}><Icon name="plus" size={16} />일정</button>
+    <button class="icon press" aria-label="설정" onclick={openSettings}><Icon name="gear" /></button>
+  </div>
 </header>
 
 <style>
   header {
-    height: 76px;
-    flex: none;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 16px;
+    flex: none; min-height: 76px;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px 16px;
   }
   .left { display: flex; align-items: center; gap: 6px; min-width: 0; }
   h1 {
-    margin: 0 10px 0 0;
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
+    margin: 0 10px 0 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em;
+    white-space: nowrap; display: flex; align-items: baseline; gap: 10px;
   }
   .sub { font-size: 17px; font-weight: 500; color: var(--text-3); letter-spacing: 0; }
 
   .icon {
-    width: 44px; height: 44px; flex: none;
-    border: 0; border-radius: 22px; background: transparent;
+    width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent;
     display: flex; align-items: center; justify-content: center;
   }
-  .icon svg { width: 20px; height: 20px; }
   .icon:disabled { color: var(--text-3); opacity: 0.4; cursor: default; }
+  .icon.on { background: var(--fill); }
 
   .today {
-    height: 44px; padding: 0 16px; margin-left: 4px;
-    border: 1px solid #d1d1d6; border-radius: 22px; background: var(--surface);
-    font-size: 15px;
+    height: 44px; padding: 0 16px; margin-left: 4px; border: 1px solid #d1d1d6;
+    border-radius: 22px; background: var(--surface); font-size: 15px;
   }
 
   nav { display: flex; gap: 4px; padding: 4px; background: var(--fill); border-radius: 24px; }
-  .tab {
-    min-width: 76px; height: 40px; padding: 0 12px;
-    border: 0; border-radius: 20px; background: transparent;
-    font-size: 15px; color: var(--text-2);
-  }
-  .tab.active {
-    background: var(--surface); color: var(--text); font-weight: 600;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  .tab { min-width: 76px; height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; font-size: 15px; color: var(--text-2); }
+  .tab.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+
+  .right { display: flex; align-items: center; justify-content: flex-end; gap: 2px; min-width: 0; }
+  .tools { display: flex; align-items: center; gap: 0; }
+  .dot { width: 40px; height: 44px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .dot span { width: 20px; height: 20px; border-radius: 10px; display: block; transition: box-shadow 160ms var(--ease-out); }
+  .dot[aria-pressed='true'] span { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px currentColor; }
+  .dot:nth-child(1) { color: #1d1d1f; }
+  .dot:nth-child(2) { color: #1f3fa6; }
+  .dot:nth-child(3) { color: #d70015; }
+
+  .sync { width: 28px; height: 44px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .sync span { width: 9px; height: 9px; border-radius: 5px; background: #34c759; }
+  .sync .warn { background: #ff9f0a; }
+  .sync .bad { background: var(--red); }
+
+  .add {
+    height: 44px; padding: 0 16px; margin: 0 4px 0 6px; border: 0; border-radius: 22px;
+    background: var(--text); color: #fff; font-size: 15px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .icon:not(:disabled):hover, .today:hover { background: var(--fill); }
+  }
+
+  /* 세로 화면 등 좁은 폭: 보기 전환을 두 번째 줄로 */
+  @media (max-width: 1100px) {
+    header { grid-template-columns: 1fr auto; padding-bottom: 8px; }
+    nav { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
+    h1 { font-size: 26px; }
   }
 </style>
