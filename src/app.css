@@ -36,6 +36,9 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* 손글씨 영역: 칸마다 스크롤 영역이 끼어 있어도 펜 입력이 취소되지 않도록 모든 하위 요소에 적용 */
+.ink-host, .ink-host * { touch-action: none; }
+
 /* 누르는 순간의 반응 */
 .press { transition: transform 160ms var(--ease-out), background-color 160ms var(--ease-out); }
 .press:active { transform: scale(0.97); }

@@ -47,14 +47,21 @@ try {
   await client.uploadFrom(configPath, '/private/ip/config.php');
   console.log('설정 파일 업로드 → /private/ip/config.php');
 
-  // 화면(빌드 결과). 이전 해시 파일이 쌓이지 않게 assets 는 비우고 올린다
-  await client.ensureDir(REMOTE);
-  try { await client.removeDir(`${REMOTE}/assets`); } catch { /* 처음 배포 */ }
-  await client.cd('/');
+  // 화면(빌드 결과). 새 파일을 모두 올린 뒤에 쓰지 않는 옛 해시 파일만 지운다(배포 중에도 사이트가 비지 않게)
   await client.ensureDir(REMOTE);
   await client.uploadFromDir('dist');
   await client.uploadFrom('deploy/root.htaccess', `${REMOTE}/.htaccess`);
-  console.log('화면 파일 업로드');
+  const keep = new Set(readdirSync('dist/assets'));
+  let removed = 0;
+  try {
+    for (const f of await client.list(`${REMOTE}/assets`)) {
+      if (f.isFile && !keep.has(f.name)) {
+        await client.remove(`${REMOTE}/assets/${f.name}`);
+        removed++;
+      }
+    }
+  } catch { /* assets 폴더 없음 */ }
+  console.log(`화면 파일 업로드 (옛 파일 ${removed}개 정리)`);
 
   // 서버 코드
   await client.ensureDir(`${REMOTE}/api`);

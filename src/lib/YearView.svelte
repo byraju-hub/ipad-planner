@@ -7,6 +7,7 @@
   import { catOf } from './categories.js';
   import { openEvent } from './ui.svelte.js';
   import InkLayer from './InkLayer.svelte';
+  import { scrollable } from './scrollable.js';
 
   let { key, go } = $props();
 
@@ -60,7 +61,7 @@
   <aside>
     <section class="panel list">
       <h2>올해 일정</h2>
-      <ul>
+      <ul use:scrollable>
         {#each upcoming as o (o.ev.id + o.day)}
           {@const c = catOf(o.ev.category)}
           <li>
@@ -105,7 +106,7 @@
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 16px 8px; min-height: 0; }
   .list { flex: 1; display: flex; flex-direction: column; }
   h2 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
-  ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; touch-action: pan-y; }
+  ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
   li { border-top: 1px solid #f2f2f7; }
   li.empty { min-height: 46px; display: flex; align-items: center; color: var(--text-3); font-size: 14px; }
   .row { width: 100%; min-height: 46px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; gap: 10px; text-align: left; }

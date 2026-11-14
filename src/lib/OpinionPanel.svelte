@@ -2,6 +2,7 @@
   import { data, newOpinion, saveOpinion, removeOpinion } from './data.svelte.js';
   import { OPINION_STATUS, statusOf } from './categories.js';
   import { parseKey } from './dates.js';
+  import { scrollable } from './scrollable.js';
 
   // 처리 전(새 의견·검토 중)이거나 이 기간에 들은 의견을 보여준다
   let { title = '의견', range } = $props();
@@ -53,7 +54,7 @@
     <h2>{title}</h2>
     <span class="count">{openCount ? `처리 전 ${openCount}건` : ''}</span>
   </header>
-  <ul>
+  <ul use:scrollable>
     {#each items as o (o.id)}
       <li>
         {#if editId === o.id}
@@ -98,7 +99,7 @@
   header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
   h2 { margin: 0; font-size: 17px; font-weight: 600; }
   .count { font-size: 13px; color: var(--text-2); }
-  ul { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; }
+  ul { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; }
   li { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-top: 1px solid #f2f2f7; }
   li.empty { color: var(--text-3); font-size: 14px; min-height: 46px; justify-content: center; }
   .body { min-height: 44px; border: 0; background: transparent; padding: 0; text-align: left; font-size: 15px; line-height: 21px; }

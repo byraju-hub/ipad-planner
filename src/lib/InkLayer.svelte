@@ -11,7 +11,8 @@
   const LH = 1024;
   const BASE_W = 2.2; // 논리 좌표 기준 기본 굵기
   const ERASE_R = 14;
-  const MOVE_THRESHOLD = 4; // 이보다 덜 움직이면 쓰기가 아니라 '톡' 누른 것으로 본다
+  const PEN_THRESHOLD = 1.5; // 펜슬: 이보다 덜 움직이면 '톡' 누른 것(클릭)으로 본다. 작은 글씨도 쓰이도록 작게
+  const OTHER_THRESHOLD = 4; // 손가락·마우스
 
   let canvas;
   let host;
@@ -20,6 +21,8 @@
   let saveTimer = null;
   let dirty = false;
   let cur = null;
+  let edits = 0; // 이 기기에서 획을 더하거나 지운 횟수(다시 읽기가 쓴 내용을 덮어쓰지 않게 확인용)
+  let rect = null;
   let suppressClick = false;
   let cw = 0;
   let ch = 0;
@@ -75,11 +78,16 @@
       for (let i = 0; i < s.p.length; i++) drawSegment(c, s, i);
       drawTail(c, s);
     }
+    // 쓰는 중인 획도 함께 그린다(다시 그리기가 중간에 끼어들어도 끊기지 않게)
+    if (cur?.started && tool.mode === 'pen') {
+      for (let i = 0; i < cur.stroke.p.length; i++) drawSegment(c, cur.stroke, i);
+    }
     c.restore();
   }
 
   function resize() {
     const r = host.getBoundingClientRect();
+    rect = r;
     const dpr = window.devicePixelRatio || 1;
     cw = r.width;
     ch = r.height;
@@ -107,6 +115,7 @@
 
   function undo() {
     if (!strokes.length) return;
+    edits++;
     strokes.pop();
     redraw();
     syncUndo();
@@ -115,7 +124,7 @@
 
   // ---- 입력 ----
   function toLogical(e) {
-    const r = host.getBoundingClientRect();
+    const r = rect || host.getBoundingClientRect();
     return [((e.clientX - r.left) / r.width) * LW, ((e.clientY - r.top) / r.height) * LH];
   }
   const round = (n, d) => Math.round(n * 10 ** d) / 10 ** d;
@@ -124,6 +133,7 @@
     const before = strokes.length;
     strokes = strokes.filter((s) => !s.p.some((q) => Math.hypot(q[0] - x, q[1] - y) < ERASE_R));
     if (strokes.length !== before) {
+      edits++;
       redraw();
       syncUndo();
       scheduleSave();
@@ -131,16 +141,22 @@
   }
 
   function onDown(e) {
-    if (ui.sheet || cur) return;
+    if (ui.sheet) return;
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
     const pen = e.pointerType === 'pen';
     const other = e.pointerType === 'touch' || (e.pointerType === 'mouse' && e.button === 0);
     if (!pen && !(tool.finger && other)) return;
     // 손가락·마우스로 쓰는 모드에서는 버튼·링크 위에서는 쓰지 않는다
     if (!pen && e.target.closest?.('button, a')) return;
+    // 끝나지 않고 남은 입력(놓친 pointerup 등)이 있으면 마무리하고 새로 시작한다
+    if (cur) {
+      if (!pen) return;
+      finishStroke();
+    }
+    rect = host.getBoundingClientRect(); // 쓰기 시작할 때 한 번만 잰다(움직일 때마다 재지 않는다)
     const [x, y] = toLogical(e);
     cur = {
-      id: e.pointerId, cx: e.clientX, cy: e.clientY, started: false,
+      id: e.pointerId, cx: e.clientX, cy: e.clientY, started: false, threshold: pen ? PEN_THRESHOLD : OTHER_THRESHOLD,
       stroke: { c: tool.color, w: BASE_W, p: [[round(x, 1), round(y, 1), round(e.pressure || 0.5, 2)]] },
     };
   }
@@ -164,7 +180,7 @@
     const events = e.getCoalescedEvents?.() ?? [];
     const list = events.length ? events : [e];
     if (!cur.started) {
-      if (Math.hypot(e.clientX - cur.cx, e.clientY - cur.cy) < MOVE_THRESHOLD) return;
+      if (Math.hypot(e.clientX - cur.cx, e.clientY - cur.cy) < cur.threshold) return;
       cur.started = true;
       try {
         host.setPointerCapture(e.pointerId);
@@ -176,19 +192,26 @@
     for (const ev of list) addPoint(ev);
   }
 
-  function onUp(e) {
-    if (!cur || e.pointerId !== cur.id) return;
+  // 진행 중인 획을 끝낸다. 움직인 입력만 획으로 남기고, 톡 누른 것은 클릭으로 넘긴다
+  function finishStroke() {
+    if (!cur) return;
     const { started, stroke } = cur;
     cur = null;
-    if (!started) return; // 톡 누름 → 클릭으로 전달
+    if (!started) return;
     suppressClick = true;
     setTimeout(() => (suppressClick = false), 350);
     if (tool.mode === 'pen' && stroke.p.length >= 2) {
+      edits++;
       strokes.push(stroke);
       drawTail(ctx(), stroke); // 마지막 구간까지 마무리
       syncUndo();
       scheduleSave();
     }
+  }
+
+  function onUp(e) {
+    if (!cur || e.pointerId !== cur.id) return;
+    finishStroke();
   }
 
   function onClick(e) {
@@ -200,8 +223,22 @@
   }
 
   async function load(key) {
+    const editsBefore = edits;
     const s = await getInk(key);
     if (key !== pageKey) return;
+    if (key === loadedKey) {
+      // 같은 페이지를 다시 읽는 경우: 읽는 동안 쓰기가 시작됐거나 획이 바뀌었으면 쓴 내용이 우선이다
+      if (cur || edits !== editsBefore) return;
+    } else if (edits !== editsBefore || cur) {
+      // 페이지를 막 넘긴 직후 바로 쓴 획은 새 페이지의 것이므로 읽은 내용 뒤에 붙인다
+      const mine = strokes;
+      strokes = s.concat(mine);
+      loadedKey = key;
+      syncUndo();
+      redraw();
+      scheduleSave();
+      return;
+    }
     strokes = s;
     loadedKey = key;
     syncUndo();
@@ -214,12 +251,20 @@
     void data.inkVersion;
     if (!host) return;
     if (dirty) flush(loadedKey);
+    // 다른 페이지로 넘어갔으면 이전 페이지 획을 비운다(새 페이지에 쓴 획과 섞이지 않게)
+    if (loadedKey && loadedKey !== key) {
+      strokes = [];
+      loadedKey = '';
+      syncUndo();
+      redraw();
+    }
     if (cur) return;
     load(key);
   });
 
   onMount(() => {
     host = canvas.parentElement;
+    host.classList.add('ink-host');
     host.style.touchAction = 'none';
     host.style.userSelect = 'none';
     host.style.webkitUserSelect = 'none';
@@ -243,6 +288,7 @@
       host.removeEventListener('pointercancel', onUp, true);
       host.removeEventListener('click', onClick, true);
       unregister();
+      host.classList.remove('ink-host');
       inkState.canUndo = false;
     };
   });

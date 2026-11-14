@@ -1,6 +1,9 @@
 import { mount } from 'svelte';
 import './app.css';
 import App from './App.svelte';
+import { installPalmRejection } from './lib/palm.js';
+
+installPalmRejection();
 
 mount(App, { target: document.getElementById('app') });
 

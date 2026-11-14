@@ -1,6 +1,7 @@
 <script>
   import { data, newTodo, saveTodo, removeTodo, toggleTodo } from './data.svelte.js';
   import Icon from './Icon.svelte';
+  import { scrollable } from './scrollable.js';
   import { parseKey } from './dates.js';
 
   // range: 이 기간에 기한이 있는 할 일 + 기한 없는 미완료 할 일을 보여준다
@@ -46,7 +47,7 @@
     <h2>{title}</h2>
     <span class="count">{items.length ? `${items.length}개 중 ${doneCount}개 완료` : ''}</span>
   </header>
-  <ul>
+  <ul use:scrollable>
     {#each items as t (t.id)}
       <li>
         {#if editId === t.id}
@@ -82,7 +83,7 @@
   header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
   h2 { margin: 0; font-size: 17px; font-weight: 600; }
   .count { font-size: 13px; color: var(--text-2); }
-  ul { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; }
+  ul { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; }
   li { display: flex; align-items: center; gap: 10px; min-height: 46px; border-top: 1px solid #f2f2f7; }
   li.empty { color: var(--text-3); font-size: 14px; }
   .box {

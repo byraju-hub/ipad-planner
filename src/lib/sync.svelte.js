@@ -26,14 +26,22 @@ async function collectDirty() {
   return changes;
 }
 
+// 반환: 화면에 영향을 주는 실제 변경이 있었는지(서버가 방금 올린 것을 그대로 돌려준 것은 변경이 아니다)
 async function applyRemote(r) {
+  const changed = { data: false, ink: false };
   for (const [store, keyName] of Object.entries(STORES)) {
     const puts = [];
     for (const remote of r[store] || []) {
       const local = await get(store, remote[keyName]);
       // 이 기기에서 더 나중에 바꾼 미전송 변경은 그대로 둔다
       if (local && local.dirty && local.updated > remote.updated) continue;
+      if (local && local.updated === remote.updated) {
+        // 올린 것이 그대로 돌아옴: 내용은 같으니 전송 완료 표시만 한다
+        if (local.dirty) puts.push({ ...local, dirty: 0 });
+        continue;
+      }
       puts.push({ ...remote, dirty: 0 });
+      changed[store === 'ink' ? 'ink' : 'data'] = true;
     }
     // 서버가 거절한 항목은 다시 보내지 않는다
     for (const [s, id] of r.rejected || []) {
@@ -42,8 +50,8 @@ async function applyRemote(r) {
       if (local && local.dirty) puts.push({ ...local, dirty: 0 });
     }
     await putMany(store, puts);
-    if (store === 'ink' && puts.length) data.inkVersion++;
   }
+  return changed;
 }
 
 export async function pendingCount() {
@@ -68,9 +76,10 @@ export async function syncNow() {
     const since = (await getMeta('since')) || 0;
     const changes = await collectDirty();
     const r = await api('sync.php', { method: 'POST', body: { since, changes } });
-    await applyRemote(r);
+    const changed = await applyRemote(r);
     await setMeta('since', Math.max(0, r.now - 5000));
-    await loadAll();
+    if (changed.data) await loadAll();
+    if (changed.ink) data.inkVersion++;
     sync.status = 'idle';
     sync.lastAt = Date.now();
     sync.error = '';
