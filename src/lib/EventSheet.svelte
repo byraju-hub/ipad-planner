@@ -79,7 +79,7 @@
         </div>
         <div class="field grow">
           <label for="ev-end">종료</label>
-          <TimeField id="ev-end" ariaLabel="종료 시간" clearable bind:value={f.end_time} />
+          <TimeField id="ev-end" ariaLabel="종료 시간" clearable placeholder="없음" bind:value={f.end_time} />
         </div>
       </div>
     {/if}

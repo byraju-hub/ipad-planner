@@ -1,39 +1,28 @@
 <script>
-  // 시간 선택칸: 오전/오후 · 시 · 분(00, 30만). 기기 기본 시간 선택창은 분을 1분 단위로 고르게 해서 쓰지 않는다.
-  let { id, value = $bindable(null), clearable = false, ariaLabel, onpick } = $props();
+  // 시간 선택칸: 한 번에 고른다. 30분 단위(00분, 30분)만 목록에 나온다.
+  // 기기 기본 시간 선택창은 분을 1분 단위로 고르게 해서 쓰지 않는다.
+  let { id, value = $bindable(null), clearable = false, placeholder = '선택', ariaLabel, onpick } = $props();
 
-  const HOURS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const label = (hhmm) => {
+    const [h, m] = hhmm.split(':').map(Number);
+    return `${h < 12 ? '오전' : '오후'} ${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')}`;
+  };
+  const SLOTS = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
 
-  const parts = $derived.by(() => {
-    if (!value) return { ap: '', h: '', m: '' };
-    const [h, m] = value.split(':').map(Number);
-    return { ap: h < 12 ? 'am' : 'pm', h: h % 12, m };
-  });
-  // 이미 저장된 일정의 분이 00·30이 아니면 그 값도 목록에 보여 준다
-  const minutes = $derived(parts.m === '' || parts.m === 0 || parts.m === 30 ? [0, 30] : [0, 30, parts.m].sort((a, b) => a - b));
+  // 이미 저장된 일정의 시간이 30분 단위가 아니면 그 값도 목록에 보여 준다
+  const slots = $derived(value && !SLOTS.includes(value) ? [...SLOTS, value].sort() : SLOTS);
 
-  const pad = (n) => String(n).padStart(2, '0');
-
-  function pick(next) {
-    const p = { ap: parts.ap || 'am', h: parts.h === '' ? 9 : parts.h, m: parts.m === '' ? 0 : parts.m, ...next };
-    value = `${pad((p.h % 12) + (p.ap === 'pm' ? 12 : 0))}:${pad(p.m)}`;
+  function change(e) {
+    value = e.currentTarget.value || null;
     onpick?.(value);
   }
 </script>
 
-<div class="tf" role="group" aria-label={ariaLabel} {id}>
-  <select aria-label="오전·오후" value={parts.ap} onchange={(e) => pick({ ap: e.currentTarget.value })}>
-    {#if !value}<option value="" disabled>--</option>{/if}
-    <option value="am">오전</option>
-    <option value="pm">오후</option>
-  </select>
-  <select aria-label="시" value={parts.h} onchange={(e) => pick({ h: Number(e.currentTarget.value) })}>
-    {#if !value}<option value="" disabled>--</option>{/if}
-    {#each HOURS as h}<option value={h}>{h}시</option>{/each}
-  </select>
-  <select aria-label="분" value={parts.m} onchange={(e) => pick({ m: Number(e.currentTarget.value) })}>
-    {#if !value}<option value="" disabled>--</option>{/if}
-    {#each minutes as m}<option value={m}>{pad(m)}분</option>{/each}
+<div class="tf">
+  <span class="text" class:empty={!value}>{value ? label(value) : placeholder}</span>
+  <select {id} aria-label={ariaLabel} value={value ?? ''} onchange={change}>
+    {#if !value}<option value="" disabled>{placeholder}</option>{/if}
+    {#each slots as s}<option value={s}>{label(s)}</option>{/each}
   </select>
   {#if clearable && value}
     <button type="button" class="clear" aria-label="지우기" onclick={() => (value = null)}>
@@ -43,14 +32,20 @@
 </div>
 
 <style>
-  .tf { display: flex; align-items: center; gap: 6px; min-width: 0; }
-  select {
-    flex: 1 1 0; min-width: 0; height: 48px; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 12px;
-    background: var(--surface); color: var(--text); font: inherit; font-size: 17px; text-align: center; text-align-last: center;
+  .tf {
+    position: relative; display: flex; align-items: center; width: 100%; min-width: 0; height: 48px;
+    padding: 0 14px; border: 1px solid #d1d1d6; border-radius: 12px; background: var(--surface);
   }
-  select:focus-visible { outline: 2px solid var(--blue); outline-offset: -1px; border-color: transparent; }
+  .text { flex: 1; min-width: 0; font-size: 17px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .text.empty { color: var(--text-3); }
+  /* 진짜 선택칸: 투명하게 칸 전체를 덮는다. 글자 크기 16px 미만이면 iOS 가 확대하므로 16px 이상 */
+  select {
+    position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0;
+    opacity: 0; font-size: 16px; cursor: pointer;
+  }
+  .tf:focus-within { outline: 2px solid var(--blue); outline-offset: -1px; border-color: transparent; }
   .clear {
-    flex: none; width: 36px; height: 44px; border: 0; background: transparent; color: var(--text-2);
-    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1; flex: none; width: 44px; height: 44px; margin-right: -12px;
+    border: 0; background: transparent; color: var(--text-2); display: flex; align-items: center; justify-content: center;
   }
 </style>
