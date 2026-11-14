@@ -18,6 +18,12 @@
 
 html, body, #app { height: 100%; }
 
+/* 이 앱은 문서 자체가 스크롤되지 않는다. 펜슬 입력을 브라우저(스크롤·확대)가 가로채지 않도록 전체에 적용.
+   스크롤이 필요한 곳(목록, 창)은 각자 pan-y 를 지정한다 */
+html, body { touch-action: none; }
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; touch-action: manipulation; }
+
 body {
   margin: 0;
   background: var(--bg);

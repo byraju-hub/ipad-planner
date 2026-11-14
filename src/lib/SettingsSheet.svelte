@@ -5,6 +5,7 @@
   import { auth, logout } from './auth.svelte.js';
   import { sync, syncNow, pendingCount } from './sync.svelte.js';
   import { closeSheet } from './ui.svelte.js';
+  import { diag, setDiag } from './diag.svelte.js';
 
   let icsUrl = $state('');
   let copied = $state(false);
@@ -135,6 +136,17 @@
     </section>
   {/if}
 
+  <section>
+    <h3>펜슬 진단</h3>
+    <p class="note">글씨가 끊길 때 켜 보세요. 화면 왼쪽 아래에 펜슬 입력 횟수가 숫자로 나타납니다. '취소'가 늘어나면 브라우저가 입력을 가로챈 것입니다.</p>
+    <label class="check"><input type="checkbox" checked={diag.on} onchange={(e) => setDiag(e.currentTarget.checked)} /> 진단 표시</label>
+  </section>
+
+  <section>
+    <h3>버전</h3>
+    <p class="note">{__BUILD__}</p>
+  </section>
+
   {#if server}
     <section>
       <h3>로그아웃</h3>
@@ -169,4 +181,6 @@
   }
   .btn:disabled { opacity: 0.4; cursor: default; }
   .danger { color: var(--red); }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text); }
+  .check input { width: 22px; height: 22px; accent-color: var(--text); }
 </style>

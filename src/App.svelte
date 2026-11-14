@@ -7,6 +7,7 @@
   import Login from './lib/Login.svelte';
   import EventSheet from './lib/EventSheet.svelte';
   import SettingsSheet from './lib/SettingsSheet.svelte';
+  import DiagOverlay from './lib/DiagOverlay.svelte';
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { parseHash, toHash, clampKey, prevKey, nextKey, canGoPrev, periodRange } from './lib/dates.js';
@@ -91,6 +92,7 @@
       {/key}
     </main>
   </div>
+  <DiagOverlay />
   {#if ui.sheet?.type === 'event'}
     {#key ui.sheet}
       <EventSheet ev={ui.sheet.ev} date={ui.sheet.date} />

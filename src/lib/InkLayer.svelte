@@ -3,6 +3,7 @@
   import { getInk, putInk, data } from './data.svelte.js';
   import { tool, inkState, registerInk } from './ink.svelte.js';
   import { ui } from './ui.svelte.js';
+  import { diag } from './diag.svelte.js';
 
   // 부모 요소 전체에 손글씨를 쓴다. 좌표는 1366×1024 논리 좌표로 저장해 기기·방향이 달라도 칸에 맞는다.
   let { pageKey } = $props();
@@ -24,6 +25,7 @@
   let edits = 0; // 이 기기에서 획을 더하거나 지운 횟수(다시 읽기가 쓴 내용을 덮어쓰지 않게 확인용)
   let rect = null;
   let suppressClick = false;
+  let lastMoveAt = 0;
   let cw = 0;
   let ch = 0;
 
@@ -151,7 +153,12 @@
     // 끝나지 않고 남은 입력(놓친 pointerup 등)이 있으면 마무리하고 새로 시작한다
     if (cur) {
       if (!pen) return;
+      if (diag.on) diag.stale++;
       finishStroke();
+    }
+    if (diag.on && pen) {
+      diag.down++;
+      lastMoveAt = 0;
     }
     rect = host.getBoundingClientRect(); // 쓰기 시작할 때 한 번만 잰다(움직일 때마다 재지 않는다)
     const [x, y] = toLogical(e);
@@ -161,17 +168,26 @@
     };
   }
 
-  function addPoint(e) {
-    const [x, y] = toLogical(e);
-    const pr = e.pressure > 0 ? e.pressure : 0.5;
-    if (tool.mode === 'eraser') return eraseAt(x, y);
+  // 한 번에 받은 점들을 모아 그린다(점마다 그리기 설정을 바꾸지 않는다)
+  function addPoints(list) {
+    if (tool.mode === 'eraser') {
+      for (const e of list) {
+        const [x, y] = toLogical(e);
+        eraseAt(x, y);
+      }
+      return;
+    }
     const s = cur.stroke;
-    s.p.push([round(x, 1), round(y, 1), round(pr, 2)]);
+    const from = s.p.length;
+    for (const e of list) {
+      const [x, y] = toLogical(e);
+      s.p.push([round(x, 1), round(y, 1), round(e.pressure > 0 ? e.pressure : 0.5, 2)]);
+    }
     const c = ctx();
     const dpr = canvas.width / cw;
     c.save();
     c.scale(dpr, dpr);
-    drawSegment(c, s, s.p.length - 1);
+    for (let i = from; i < s.p.length; i++) drawSegment(c, s, i);
     c.restore();
   }
 
@@ -183,13 +199,20 @@
       if (Math.hypot(e.clientX - cur.cx, e.clientY - cur.cy) < cur.threshold) return;
       cur.started = true;
       try {
-        host.setPointerCapture(e.pointerId);
+        host.setPointerCapture(e.pointerId); // 되면 좋고, 안 돼도 창 전체에서 이벤트를 받으므로 괜찮다
       } catch {
         /* 이미 해제됨 */
       }
     }
     e.preventDefault();
-    for (const ev of list) addPoint(ev);
+    if (diag.on) {
+      diag.move++;
+      if (events.length > 1) diag.coalesced += events.length - 1;
+      const t = performance.now();
+      if (lastMoveAt) diag.maxGap = Math.max(diag.maxGap, t - lastMoveAt);
+      lastMoveAt = t;
+    }
+    addPoints(list);
   }
 
   // 진행 중인 획을 끝낸다. 움직인 입력만 획으로 남기고, 톡 누른 것은 클릭으로 넘긴다
@@ -201,6 +224,7 @@
     suppressClick = true;
     setTimeout(() => (suppressClick = false), 350);
     if (tool.mode === 'pen' && stroke.p.length >= 2) {
+      if (diag.on) diag.strokes++;
       edits++;
       strokes.push(stroke);
       drawTail(ctx(), stroke); // 마지막 구간까지 마무리
@@ -211,6 +235,12 @@
 
   function onUp(e) {
     if (!cur || e.pointerId !== cur.id) return;
+    if (diag.on && e.pointerType === 'pen') {
+      if (e.type === 'pointercancel') {
+        diag.cancel++;
+        diag.lastCancel = (e.target?.className?.baseVal ?? e.target?.className ?? e.target?.tagName ?? '').toString().slice(0, 24);
+      } else diag.up++;
+    }
     finishStroke();
   }
 
@@ -273,9 +303,10 @@
     const ro = new ResizeObserver(resize);
     ro.observe(host);
     host.addEventListener('pointerdown', onDown, true);
-    host.addEventListener('pointermove', onMove, true);
-    host.addEventListener('pointerup', onUp, true);
-    host.addEventListener('pointercancel', onUp, true);
+    // 이동·끝남은 창 전체에서 받는다: 글씨가 영역 밖으로 나가거나 아래 요소가 바뀌어도 획이 끊기지 않는다
+    window.addEventListener('pointermove', onMove, true);
+    window.addEventListener('pointerup', onUp, true);
+    window.addEventListener('pointercancel', onUp, true);
     host.addEventListener('click', onClick, true);
     const unregister = registerInk({ undo });
     load(pageKey);
@@ -283,9 +314,9 @@
       flush(loadedKey);
       ro.disconnect();
       host.removeEventListener('pointerdown', onDown, true);
-      host.removeEventListener('pointermove', onMove, true);
-      host.removeEventListener('pointerup', onUp, true);
-      host.removeEventListener('pointercancel', onUp, true);
+      window.removeEventListener('pointermove', onMove, true);
+      window.removeEventListener('pointerup', onUp, true);
+      window.removeEventListener('pointercancel', onUp, true);
       host.removeEventListener('click', onClick, true);
       unregister();
       host.classList.remove('ink-host');

@@ -1,35 +1,49 @@
-// 손바닥 무시. 애플 펜슬로 쓰는 동안(그리고 직후)에 닿는 손가락 터치는 모두 버린다.
-// 손바닥이 닿아 일정이 열리거나, 화면이 넘어가거나, 글씨가 끊기는 것을 막는다.
-const GRACE = 800; // 펜슬이 떨어진 뒤에도 이 시간(ms) 동안은 손바닥으로 본다
+// 손바닥 무시. 애플 펜슬이 화면에 닿아 쓰는 동안(그리고 직후)에 닿는 손가락 터치는 버린다.
+// 판정은 보수적으로 한다: 펜슬이 실제로 닿은 기록이 있을 때만 손바닥으로 본다.
+// (접촉 면적 같은 추정은 쓰지 않는다. 아이패드 Safari는 손가락도 크게 보고해 모든 터치를 막을 수 있다)
+import { diag } from './diag.svelte.js';
+
+const GRACE = 600; // 펜슬이 떨어진 뒤에도 이 시간(ms) 동안은 손바닥으로 본다
+const STALE = 2500; // 펜슬 닿음 기록이 이보다 오래 갱신되지 않으면 놓친 것으로 보고 버린다
 const CLICK_BLOCK = 500;
 
-const penDown = new Set();
+const penDown = new Map(); // pointerId → 마지막 이벤트 시각
 const palmIds = new Set();
-let lastPen = -Infinity;
+let lastContact = -Infinity;
 let blockClickUntil = -Infinity;
 let lastDownType = '';
 
 const now = () => performance.now();
-export const penNear = () => penDown.size > 0 || now() - lastPen < GRACE;
+
+function activePens() {
+  const t = now();
+  for (const [id, at] of penDown) if (t - at > STALE) penDown.delete(id);
+  return penDown.size;
+}
+export const penNear = () => activePens() > 0 || now() - lastContact < GRACE;
 
 function swallow(e) {
   e.stopImmediatePropagation();
   if (e.cancelable) e.preventDefault();
-}
-
-function markPalm(e) {
-  palmIds.add(e.pointerId);
-  swallow(e);
+  if (diag.on) diag.palm++;
 }
 
 function onPointer(e) {
   const end = e.type === 'pointerup' || e.type === 'pointercancel';
 
   if (e.pointerType === 'pen') {
-    lastPen = now();
-    if (e.type === 'pointerdown') penDown.add(e.pointerId);
-    if (end) penDown.delete(e.pointerId);
-    if (e.type === 'pointerdown') lastDownType = 'pen';
+    // 화면에 닿아 있을 때만 센다(공중에 떠 있는 hover 이동은 제외)
+    const contact = e.type === 'pointerdown' || e.buttons > 0 || e.pressure > 0;
+    if (e.type === 'pointerdown') {
+      penDown.set(e.pointerId, now());
+      lastDownType = 'pen';
+    } else if (end) {
+      penDown.delete(e.pointerId);
+      lastContact = now();
+    } else if (contact && penDown.has(e.pointerId)) {
+      penDown.set(e.pointerId, now());
+    }
+    if (contact) lastContact = now();
     return;
   }
   if (e.pointerType !== 'touch') {
@@ -39,15 +53,15 @@ function onPointer(e) {
 
   if (e.type === 'pointerdown') {
     lastDownType = 'touch';
-    // 펜슬이 가까이 있거나, 접촉 면적이 큰 터치(손바닥)
-    if (penNear() || e.width > 48 || e.height > 48) markPalm(e);
+    if (penNear()) {
+      palmIds.add(e.pointerId);
+      swallow(e);
+    }
     return;
   }
 
-  // 먼저 닿아 있던 손가락도 펜슬이 쓰기 시작하면 손바닥으로 본다
-  if (!palmIds.has(e.pointerId) && (penDown.size > 0 || (e.type === 'pointerup' && penNear()))) {
-    palmIds.add(e.pointerId);
-  }
+  // 먼저 닿아 있던 손가락도 펜슬이 쓰는 동안이면 손바닥으로 본다
+  if (!palmIds.has(e.pointerId) && activePens() > 0) palmIds.add(e.pointerId);
   if (palmIds.has(e.pointerId)) {
     if (end) {
       palmIds.delete(e.pointerId);
@@ -59,9 +73,7 @@ function onPointer(e) {
 
 // 손바닥을 뗄 때 생기는 클릭(버튼·칸이 눌리는 것)을 막는다. 펜슬로 톡 누른 클릭은 통과시킨다
 function onClick(e) {
-  if (now() < blockClickUntil && lastDownType !== 'pen' && e.pointerType !== 'pen') {
-    swallow(e);
-  }
+  if (now() < blockClickUntil && lastDownType === 'touch' && e.pointerType !== 'pen') swallow(e);
 }
 
 export function installPalmRejection() {
