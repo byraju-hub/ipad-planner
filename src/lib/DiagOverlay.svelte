@@ -9,7 +9,7 @@
       <button onclick={() => setDiag(false)}>끄기</button>
     </div>
     <div>닿음 {diag.down} · 이동 {diag.move} (묶음 {diag.coalesced}) · 뗌 {diag.up}</div>
-    <div>취소 <b class:bad={diag.cancel > 0}>{diag.cancel}</b> · 획 {diag.strokes} · 정리 {diag.stale} · 이음 {diag.stitched} · 손바닥 {diag.palm}</div>
+    <div>취소 <b class:bad={diag.cancel > 0}>{diag.cancel}</b> · 획 {diag.strokes} · 정리 {diag.stale} · 이음 {diag.stitched} · 먼지 {diag.dust} · 손바닥 {diag.palm}</div>
     <div>이동 간격 최대 {Math.round(diag.maxGap)}ms{diag.lastCancel ? ` · 취소: ${diag.lastCancel}` : ''}</div>
   </div>
 {/if}

@@ -14,6 +14,10 @@
   const ERASE_R = 14;
   const PEN_THRESHOLD = 1.5; // 펜슬: 이보다 덜 움직이면 '톡' 누른 것(클릭)으로 본다. 작은 글씨도 쓰이도록 작게
   const OTHER_THRESHOLD = 4; // 손가락·마우스
+  // 먼지: 글씨 사이에 펜슬이 유리를 살짝 스칠 때 생기는 아주 짧고 약한 접촉은 획으로 남기지 않는다(논리 좌표 기준)
+  const DUST_LEN = 5; // 이보다 짧으면 어떤 압력이든 먼지
+  const DUST_LIGHT_LEN = 14; // 이보다 짧으면서
+  const DUST_LIGHT_PRESSURE = 0.2; // 가장 센 압력도 이보다 약하면 먼지
 
   let canvas;
   let host;
@@ -32,6 +36,20 @@
   let ch = 0;
 
   const ctx = () => canvas.getContext('2d');
+
+  // 펜슬은 압력 0도 '아주 약함'으로 본다(0.5로 바꾸면 스친 접촉이 보통 압력의 획이 된다)
+  const pressureOf = (e) => (e.pressure > 0 ? e.pressure : e.pointerType === 'pen' ? 0.05 : 0.5);
+
+  function isDust(stroke) {
+    const p = stroke.p;
+    let len = 0;
+    let maxP = 0;
+    for (let i = 0; i < p.length; i++) {
+      if (i) len += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+      if (p[i][2] > maxP) maxP = p[i][2];
+    }
+    return len < DUST_LEN || (len < DUST_LIGHT_LEN && maxP < DUST_LIGHT_PRESSURE);
+  }
 
   // ---- 그리기 ----
   function widthOf(s, pressure) {
@@ -164,18 +182,20 @@
     }
     rect = host.getBoundingClientRect(); // 쓰기 시작할 때 한 번만 잰다(움직일 때마다 재지 않는다)
     const [x, y] = toLogical(e);
-    const first = [round(x, 1), round(y, 1), round(e.pressure || 0.5, 2)];
+    const first = [round(x, 1), round(y, 1), round(pressureOf(e), 2)];
     const points = [first];
     let drawn = 1;
+    let stitched = false;
     // 직전 획이 브라우저의 취소로 끊겼고 바로 이어 쓰는 거라면, 끊긴 끝점에서 이어 붙여 선이 끊겨 보이지 않게 한다
     if (pen && lastCancelled && performance.now() - lastCancelled.at < STITCH_MS && lastCancelled.color === tool.color && tool.mode === 'pen') {
       points.unshift(lastCancelled.pt);
+      stitched = true;
       if (diag.on) diag.stitched++;
     }
     lastCancelled = null;
     cur = {
       id: e.pointerId, cx: e.clientX, cy: e.clientY, started: false, threshold: pen ? PEN_THRESHOLD : OTHER_THRESHOLD, drawn,
-      stroke: { c: tool.color, w: BASE_W, p: points },
+      stroke: { c: tool.color, w: BASE_W, p: points, stitched },
     };
   }
 
@@ -191,7 +211,7 @@
     const s = cur.stroke;
     for (const e of list) {
       const [x, y] = toLogical(e);
-      s.p.push([round(x, 1), round(y, 1), round(e.pressure > 0 ? e.pressure : 0.5, 2)]);
+      s.p.push([round(x, 1), round(y, 1), round(pressureOf(e), 2)]);
     }
     const c = ctx();
     const dpr = canvas.width / cw;
@@ -234,6 +254,12 @@
     if (!started) return;
     suppressClick = true;
     setTimeout(() => (suppressClick = false), 350);
+    if (tool.mode === 'pen' && stroke.p.length >= 2 && isDust(stroke) && !stroke.stitched) {
+      if (diag.on) diag.dust++;
+      redraw(); // 쓰는 동안 화면에 잠깐 그려진 점을 지운다
+      return;
+    }
+    delete stroke.stitched; // 저장하는 획에는 넣지 않는다
     if (tool.mode === 'pen' && stroke.p.length >= 2) {
       if (diag.on) diag.strokes++;
       edits++;
@@ -284,7 +310,7 @@
       scheduleSave();
       return;
     }
-    strokes = s;
+    strokes = s.filter((st) => !(st.p.length <= 4 && isDust(st)));
     loadedKey = key;
     syncUndo();
     redraw();

@@ -17,6 +17,7 @@ export const diag = $state({
   strokes: 0, // 저장된 획
   stale: 0, // 끝나지 않은 입력을 정리한 횟수
   stitched: 0, // 취소로 끊긴 획을 이어 붙인 횟수
+  dust: 0, // 짧고 약해서 버린 접촉(먼지)
   palm: 0, // 손바닥으로 무시한 터치
   maxGap: 0, // 이동 이벤트 사이 가장 긴 간격(ms)
   lastCancel: '', // 마지막 취소 때 눌려 있던 요소
@@ -32,5 +33,5 @@ export function setDiag(on) {
 }
 
 export function resetDiag() {
-  Object.assign(diag, { down: 0, move: 0, coalesced: 0, up: 0, cancel: 0, strokes: 0, stale: 0, stitched: 0, palm: 0, maxGap: 0, lastCancel: '' });
+  Object.assign(diag, { down: 0, move: 0, coalesced: 0, up: 0, cancel: 0, strokes: 0, stale: 0, stitched: 0, dust: 0, palm: 0, maxGap: 0, lastCancel: '' });
 }
