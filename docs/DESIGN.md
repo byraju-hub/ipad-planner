@@ -49,7 +49,7 @@
 
 | 테이블 | 주요 칸 |
 |---|---|
-| `events` 일정 | id, title, date_start, date_end, time_start, time_end, all_day, category(설교/예배/심방·미팅/개인), repeat_rule(없음/매주/매월/매년), alarm(없음/정시/10분 전/1시간 전/하루 전), memo, updated_at, deleted |
+| `events` 일정 | id, title, date_start, date_end, time_start, time_end, all_day, category(설교/교회/심방·미팅/개인. 저장 값은 worship), repeat_rule(없음/매주/매월/매년), alarm(없음/정시/10분 전/1시간 전/하루 전), memo, updated_at, deleted |
 | `todos` 할 일 | id, title, due_date, done, done_at, sort, updated_at, deleted |
 | `opinions` 의견 | id, content, source(누가·어디서), heard_on, status(새 의견/검토 중/반영/보류), memo, updated_at, deleted |
 | `ink` 손글씨 | page_key, strokes(JSON), updated_at |
@@ -142,7 +142,7 @@
 ## 9. 정해야 할 것
 
 - "의견 관리"의 뜻: 시안은 **다른 분들에게 들은 의견·건의를 기록하고 처리 상태를 관리**하는 것으로 잡았다. 본인 생각·아이디어 노트라면 구성을 바꾼다.
-- (확정) 일정 분류와 색: 설교 빨강, 예배 파랑, 심방·미팅 주황, 개인 그린
+- (확정) 일정 분류와 색: 설교 빨강, 교회 파랑(처음 이름은 예배), 심방·미팅 주황, 개인 그린
 - 아이폰·PC에서도 같이 볼지 (동기화는 설계에 포함되어 있음)
 - cafe24 호스팅 상품 이름과 cron(예약 작업) 사용 가능 여부 (웹 푸시 가능 여부를 가른다)
 - 미리알림 앱 연동이 꼭 필요한지 (필요하면 CalDAV 검토)

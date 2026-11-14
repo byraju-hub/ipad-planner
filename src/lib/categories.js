@@ -1,6 +1,6 @@
 export const CATEGORIES = [
   { id: 'sermon', label: '설교', bg: '#FFE9E7', fg: '#B3000F' },
-  { id: 'worship', label: '예배', bg: '#E5F0FF', fg: '#004A9F' },
+  { id: 'worship', label: '교회', bg: '#E5F0FF', fg: '#004A9F' },
   { id: 'visit', label: '심방·미팅', bg: '#FFF1DF', fg: '#8A4500' },
   { id: 'personal', label: '개인', bg: '#E3F4E8', fg: '#1B6B34' },
 ];
