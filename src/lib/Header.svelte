@@ -89,7 +89,7 @@
 
   .today {
     height: 44px; padding: 0 16px; margin-left: 4px; border: 1px solid #d1d1d6;
-    border-radius: 22px; background: var(--surface); font-size: 15px;
+    border-radius: 22px; background: var(--surface); font-size: 15px; flex: none; white-space: nowrap;
   }
 
   nav { display: flex; gap: 4px; padding: 4px; background: var(--fill); border-radius: 24px; }
@@ -113,7 +113,7 @@
   .add {
     height: 44px; padding: 0 16px; margin: 0 4px 0 6px; border: 0; border-radius: 22px;
     background: var(--text); color: #fff; font-size: 15px; font-weight: 600;
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -124,6 +124,18 @@
   @media (max-width: 1100px) {
     header { grid-template-columns: 1fr auto; padding-bottom: 8px; }
     nav { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
-    h1 { font-size: 26px; }
+  }
+
+  /* 11인치 가로 화면(약 1180px) 등: 날짜가 두 자리가 되어도 '오늘'이 줄바꿈되지 않도록 글자·여백을 줄인다 */
+  @media (max-width: 1280px) {
+    header { gap: 8px 10px; }
+    h1 { font-size: 22px; margin-right: 2px; gap: 6px; }
+    .sub { font-size: 13px; }
+    .left { gap: 2px; }
+    .icon { width: 38px; }
+    .today { padding: 0 12px; margin-left: 2px; font-size: 14px; }
+    .tab { min-width: 64px; }
+    .add { padding: 0 12px; margin: 0 2px 0 4px; }
+    .dot { width: 34px; }
   }
 </style>
