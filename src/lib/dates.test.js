@@ -2,9 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MIN_DATE, dayOfWeek, weekStart, monthCells, canGoPrev, prevKey, nextKey,
-  parseHash, toHash, periodTitle, clampKey,
+  parseHash, toHash, periodTitle, clampKey, startKey,
 } from './dates.js';
 import { holidayName, holidaysOf } from './holidays.js';
+
+test('처음 켜면 금요일까지는 그 주, 토요일은 다음 주', () => {
+  assert.equal(weekStart(startKey('2027-01-03')), '2027-01-03'); // 주일
+  assert.equal(weekStart(startKey('2027-01-08')), '2027-01-03'); // 금요일
+  assert.equal(weekStart(startKey('2027-01-09')), '2027-01-10'); // 토요일 → 다음 주
+});
 
 test('한 주는 주일에 시작한다', () => {
   assert.equal(dayOfWeek('2027-01-03'), 0); // 2027-01-03은 주일

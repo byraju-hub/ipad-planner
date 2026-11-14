@@ -134,8 +134,13 @@ export function toHash(view, key) {
   return `#/week/${key}`;
 }
 
+// 처음 켰을 때 볼 날짜: 금요일까지는 오늘, 토요일에는 다음 날(다음 주 주일)
+export function startKey(todayKey = today()) {
+  return dayOfWeek(todayKey) === 6 ? addDays(todayKey, 1) : todayKey;
+}
+
 export function parseHash(hash) {
-  const fallback = { view: 'week', key: clampKey(today()) };
+  const fallback = { view: 'week', key: clampKey(startKey()) };
   const match = /^#\/(year|month|week)\/([\d-]+)$/.exec(hash || '');
   if (!match) return fallback;
   const [, view, value] = match;
