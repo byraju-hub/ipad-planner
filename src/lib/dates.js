@@ -135,7 +135,7 @@ export function toHash(view, key) {
 }
 
 export function parseHash(hash) {
-  const fallback = { view: 'month', key: clampKey(today()) };
+  const fallback = { view: 'week', key: clampKey(today()) };
   const match = /^#\/(year|month|week)\/([\d-]+)$/.exec(hash || '');
   if (!match) return fallback;
   const [, view, value] = match;

@@ -43,7 +43,8 @@ test('주소(#) 해석', () => {
   assert.deepEqual(parseHash('#/year/2027'), { view: 'year', key: '2027-01-01' });
   assert.deepEqual(parseHash('#/week/2027-01-06'), { view: 'week', key: '2027-01-06' });
   assert.equal(parseHash('#/month/2020-01').key, MIN_DATE); // 시작일 이전은 시작일로
-  assert.equal(parseHash('#/month/2027-13').view, 'month'); // 잘못된 값은 기본 화면
+  assert.equal(parseHash('#/month/2027-13').view, 'week'); // 잘못된 값은 기본 화면(이번 주 주간)
+  assert.equal(parseHash('').view, 'week'); // 처음 켜면 이번 주 주간
   assert.equal(toHash('month', '2027-01-15'), '#/month/2027-01');
 });
 
