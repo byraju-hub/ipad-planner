@@ -1,6 +1,8 @@
 <script>
   import Sheet from './Sheet.svelte';
   import PickerField from './PickerField.svelte';
+  import TimeField from './TimeField.svelte';
+  import { endAfter } from './time.js';
   import { CATEGORIES, REPEATS, ALARMS } from './categories.js';
   import { saveEvent, removeEvent, newEvent } from './data.svelte.js';
   import { closeSheet } from './ui.svelte.js';
@@ -15,6 +17,11 @@
   let f = $state(ev ? { ...ev } : newEvent(date));
   let error = $state('');
   let confirmDelete = $state(false);
+
+  // 시작 시간을 고르면 종료 시간은 2시간 뒤로 맞춘다(종료는 따로 고쳐도 된다)
+  function autoEnd(start) {
+    f.end_time = endAfter(start);
+  }
 
   async function save() {
     const e = { ...f, title: f.title.trim() };
@@ -68,11 +75,11 @@
       <div class="row">
         <div class="field grow">
           <label for="ev-start">시작</label>
-          <PickerField id="ev-start" type="time" bind:value={f.start_time} />
+          <TimeField id="ev-start" ariaLabel="시작 시간" bind:value={f.start_time} onpick={autoEnd} />
         </div>
         <div class="field grow">
           <label for="ev-end">종료</label>
-          <PickerField id="ev-end" type="time" clearable placeholder="없음" bind:value={f.end_time} />
+          <TimeField id="ev-end" ariaLabel="종료 시간" clearable bind:value={f.end_time} />
         </div>
       </div>
     {/if}

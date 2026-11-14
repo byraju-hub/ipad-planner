@@ -43,7 +43,7 @@ async function save(store, list, rec) {
 // ---- 일정 ----
 export function newEvent(date) {
   return {
-    id: uid(), title: '', start_date: date, end_date: date, start_time: '09:00', end_time: '10:00',
+    id: uid(), title: '', start_date: date, end_date: date, start_time: '09:00', end_time: '11:00',
     all_day: 0, category: 'personal', repeat_rule: 'none', alarm: 'none', memo: '', deleted: 0,
   };
 }
