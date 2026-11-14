@@ -96,7 +96,7 @@
   .dow { font-size: 12px; color: var(--text-2); }
   .day { position: relative; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 15px; background: transparent; font-size: 14px; }
   .day:disabled { cursor: default; }
-  .day.has::after { content: ''; position: absolute; left: 50%; bottom: 1px; width: 4px; height: 4px; margin-left: -2px; border-radius: 2px; background: var(--text-3); }
+  .day.has::after { content: ''; position: absolute; left: 50%; top: 1px; width: 4px; height: 4px; margin-left: -2px; border-radius: 2px; background: var(--text-3); }
   .day.today { background: var(--text); color: #fff !important; font-weight: 600; }
   .day.today.has::after { background: #fff; }
   .red { color: var(--red); }
