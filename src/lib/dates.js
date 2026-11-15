@@ -124,10 +124,10 @@ export function periodTitle(view, key) {
   const a = parseKey(start);
   const b = parseKey(end);
   let main;
-  if (a.m !== b.m) main = `${a.m}월 ${a.d}일 – ${b.m}월 ${b.d}일`;
-  else main = `${a.m}월 ${a.d}일 – ${b.d}일`;
-  // 연도는 작은 글씨로: 해가 바뀌는 주는 '2026년 – 2027년'
-  return { main, sub: a.y === b.y ? `${a.y}년` : `${a.y}년 – ${b.y}년` };
+  if (a.m !== b.m) main = `${a.m}/${a.d} - ${b.m}/${b.d}`;
+  else main = `${a.m}/${a.d} - ${b.d}`;
+  // 연도는 작은 글씨로: 해가 바뀌는 주는 '2026 - 2027'
+  return { main, sub: a.y === b.y ? `${a.y}` : `${a.y} - ${b.y}` };
 }
 
 // 주소의 # 부분 ↔ 화면 상태

@@ -55,9 +55,9 @@ test('주소(#) 해석', () => {
 });
 
 test('주간 제목', () => {
-  assert.deepEqual(periodTitle('week', '2027-01-06'), { main: '1월 3일 – 9일', sub: '2027년' });
-  assert.deepEqual(periodTitle('week', '2026-12-01'), { main: '11월 29일 – 12월 5일', sub: '2026년' });
-  assert.deepEqual(periodTitle('week', '2027-01-01'), { main: '12월 27일 – 1월 2일', sub: '2026년 – 2027년' });
+  assert.deepEqual(periodTitle('week', '2027-01-06'), { main: '1/3 - 9', sub: '2027' });
+  assert.deepEqual(periodTitle('week', '2026-12-01'), { main: '11/29 - 12/5', sub: '2026' });
+  assert.deepEqual(periodTitle('week', '2027-01-01'), { main: '12/27 - 1/2', sub: '2026 - 2027' });
 });
 
 test('공휴일 2026년 12월 ~ 2027년', () => {

@@ -92,12 +92,12 @@
     background: var(--surface); color: #fff; display: flex; align-items: center; justify-content: center;
   }
   .box.on { background: var(--text); border-color: var(--text); }
-  .text { flex: 1; min-width: 0; min-height: 44px; border: 0; background: transparent; padding: 0; text-align: left; font-size: 14px; line-height: 20px; }
+  .text { flex: 1; min-width: 0; min-height: 44px; border: 0; background: transparent; padding: 0; text-align: left; font-size: 13px; line-height: 20px; }
   .text.done { color: var(--text-2); text-decoration: line-through; }
   .due { font-size: 12px; color: var(--text-2); flex: none; }
   .add input, .edit input[type='text'] {
     width: 100%; height: 46px; padding: 0; border: 0; border-top: 1px solid #f2f2f7; background: transparent;
-    font: inherit; font-size: 14px; color: var(--text);
+    font: inherit; font-size: 13px; color: var(--text);
   }
   .add input::placeholder { color: var(--blue); opacity: 1; }
   .add input:focus-visible { outline: none; }
