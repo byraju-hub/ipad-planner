@@ -1,6 +1,6 @@
 <script>
   import { periodTitle, prevKey, nextKey, canGoPrev, switchKey, today, clampKey } from './dates.js';
-  import { tool, setTool, COLORS, inkState, undoInk } from './ink.svelte.js';
+  import { tool, setTool, COLORS, WIDTHS, WIDTH_NAMES, inkState, undoInk } from './ink.svelte.js';
   import { openEvent, openSettings, defaultDate } from './ui.svelte.js';
   import { sync } from './sync.svelte.js';
   import { auth } from './auth.svelte.js';
@@ -14,6 +14,8 @@
     ['week', '주간'],
   ];
   const label = { year: '해', month: '달', week: '주' };
+  const widthIdx = $derived(WIDTHS.indexOf(tool.width));
+  const nextWidth = () => setTool({ mode: 'pen', width: WIDTHS[(widthIdx + 1) % WIDTHS.length] });
   const colorName = { '#1d1d1f': '검정', '#1f3fa6': '파랑', '#d70015': '빨강' };
 
   let title = $derived(periodTitle(view, key));
@@ -56,6 +58,11 @@
           <span style={`background:${c}`}></span>
         </button>
       {/each}
+      <button class="icon press" aria-label={`펜 두께: ${WIDTH_NAMES[widthIdx]} (누르면 바뀜)`} title={`펜 두께: ${WIDTH_NAMES[widthIdx]}`} onclick={nextWidth}>
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-linecap="round">
+          <path d="M4 16 L18 6" stroke-width={[1.6, 3, 5][widthIdx]} />
+        </svg>
+      </button>
       <button class="icon press" class:on={tool.mode === 'eraser'} aria-label="지우개" aria-pressed={tool.mode === 'eraser'}
         onclick={() => setTool({ mode: tool.mode === 'eraser' ? 'pen' : 'eraser' })}><Icon name="eraser" /></button>
       <button class="icon press" aria-label="되돌리기" disabled={!inkState.canUndo} onclick={undoInk}><Icon name="undo" /></button>

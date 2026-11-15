@@ -10,8 +10,7 @@
 
   const LW = 1366;
   const LH = 1024;
-  const BASE_W = 2.2; // 논리 좌표 기준 기본 굵기
-  const ERASE_R = 14;
+    const ERASE_R = 14;
   const PEN_THRESHOLD = 1.5; // 펜슬: 이보다 덜 움직이면 '톡' 누른 것(클릭)으로 본다. 작은 글씨도 쓰이도록 작게
   const OTHER_THRESHOLD = 4; // 손가락·마우스
   // 먼지: 글씨 사이에 펜슬이 유리를 살짝 스칠 때 생기는 아주 짧고 약한 접촉은 획으로 남기지 않는다(논리 좌표 기준)
@@ -187,7 +186,7 @@
     let drawn = 1;
     let stitched = false;
     // 직전 획이 브라우저의 취소로 끊겼고 바로 이어 쓰는 거라면, 끊긴 끝점에서 이어 붙여 선이 끊겨 보이지 않게 한다
-    if (pen && lastCancelled && performance.now() - lastCancelled.at < STITCH_MS && lastCancelled.color === tool.color && tool.mode === 'pen') {
+    if (pen && lastCancelled && performance.now() - lastCancelled.at < STITCH_MS && lastCancelled.color === tool.color && lastCancelled.w === tool.width && tool.mode === 'pen') {
       points.unshift(lastCancelled.pt);
       stitched = true;
       if (diag.on) diag.stitched++;
@@ -195,7 +194,7 @@
     lastCancelled = null;
     cur = {
       id: e.pointerId, cx: e.clientX, cy: e.clientY, started: false, threshold: pen ? PEN_THRESHOLD : OTHER_THRESHOLD, drawn,
-      stroke: { c: tool.color, w: BASE_W, p: points, stitched },
+      stroke: { c: tool.color, w: tool.width, p: points, stitched },
     };
   }
 
@@ -274,7 +273,7 @@
     if (!cur || e.pointerId !== cur.id) return;
     if (e.type === 'pointercancel' && e.pointerType === 'pen' && cur.started && tool.mode === 'pen') {
       const pts = cur.stroke.p;
-      lastCancelled = { at: performance.now(), pt: pts[pts.length - 1], color: cur.stroke.c };
+      lastCancelled = { at: performance.now(), pt: pts[pts.length - 1], color: cur.stroke.c, w: cur.stroke.w };
     }
     if (diag.on && e.pointerType === 'pen') {
       if (e.type === 'pointercancel') {
