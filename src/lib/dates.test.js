@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MIN_DATE, dayOfWeek, weekStart, monthCells, canGoPrev, prevKey, nextKey,
-  parseHash, toHash, periodTitle, clampKey, startKey,
+  parseHash, toHash, periodTitle, clampKey, startKey, switchKey,
 } from './dates.js';
 import { holidayName, holidaysOf } from './holidays.js';
 
@@ -94,4 +94,16 @@ test('2028년 이후도 계산된다: 음력 공휴일과 겹침', () => {
   assert.equal(holidayName('2030-02-03'), '설날'); // 일요일 → 연휴 다음 날 대체
   assert.equal(holidayName('2030-02-05'), '대체공휴일');
   assert.equal(holidayName('2030-09-12'), '추석');
+});
+
+test('Weekly로 바꾸면 금요일까지는 이번 주, 토요일부터는 다음 주', () => {
+  // 오늘이 금요일(2027-01-08): 이번 달/올해에서 주간으로 → 이번 주
+  assert.equal(weekStart(switchKey('month', 'week', '2027-01-01', '2027-01-08')), '2027-01-03');
+  assert.equal(weekStart(switchKey('year', 'week', '2027-01-01', '2027-01-08')), '2027-01-03');
+  // 오늘이 토요일(2027-01-09): 다음 주
+  assert.equal(weekStart(switchKey('month', 'week', '2027-01-01', '2027-01-09')), '2027-01-10');
+  // 오늘이 없는 달에서는 그 달의 첫 주
+  assert.equal(weekStart(switchKey('month', 'week', '2027-02-01', '2027-01-08')), '2027-01-31');
+  // 월간·연간으로는 오늘 기준
+  assert.equal(switchKey('week', 'month', '2027-01-10', '2027-01-09'), '2027-01-09');
 });

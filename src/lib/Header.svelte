@@ -46,7 +46,7 @@
   <nav aria-label="보기 전환">
     {#each tabs as [id, name, ko]}
       <button class="tab press" class:active={view === id} aria-label={ko} aria-current={view === id ? 'page' : undefined}
-        onclick={() => go(id, switchKey(id, key))}>{name}</button>
+        onclick={() => go(id, switchKey(view, id, key))}>{name}</button>
     {/each}
   </nav>
 

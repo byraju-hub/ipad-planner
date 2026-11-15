@@ -106,10 +106,14 @@ export function canGoPrev(view, key) {
 }
 
 // 화면을 바꿀 때 기준 날짜. 오늘이 그 기간 안에 있으면 오늘로 맞춘다.
-export function switchKey(view, key) {
-  const t = today();
-  const { start, end } = periodRange(view, key);
-  return t >= MIN_DATE && t >= start && t <= end ? t : key;
+// 보기를 바꿀 때 기준 날짜. 지금 보던 기간이 오늘을 품고 있으면 오늘 기준으로 간다.
+// 주간으로 가면 처음 켤 때와 같은 규칙: 금요일까지는 이번 주, 토요일에는 다음 주. 아니면 보던 날짜 그대로.
+export function switchKey(from, to, key, t = today()) {
+  const ref = startKey(t);
+  const { start, end } = periodRange(from, key);
+  const here = (t >= start && t <= end) || (ref >= start && ref <= end);
+  if (!here || t < MIN_DATE) return key;
+  return to === 'week' ? ref : t;
 }
 
 export function periodTitle(view, key) {
