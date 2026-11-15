@@ -6,6 +6,7 @@
   import { buildDayMap, occLabel } from './recur.js';
   import { catOf } from './categories.js';
   import { openEvent } from './ui.svelte.js';
+  import { scrollable } from './scrollable.js';
   import Icon from './Icon.svelte';
   import InkLayer from './InkLayer.svelte';
   import TodoPanel from './TodoPanel.svelte';
@@ -33,6 +34,7 @@
           {/if}
         </div>
         {#if name}<div class="holiday">{name}</div>{/if}
+        <div class="list" use:scrollable>
         {#each dayMap.get(dayKey) || [] as o (o.ev.id + o.day)}
           {@const c = catOf(o.ev.category)}
           <button class="card press" style={`--bg:${c.bg};--fg:${c.fg}`} onclick={() => openEvent(o.ev, o.day)}>
@@ -40,6 +42,7 @@
             <span class="title">{o.ev.title}</span>
           </button>
         {/each}
+        </div>
       </div>
     {/each}
   </section>
@@ -61,12 +64,15 @@
   .day { background: var(--surface); padding: 12px 10px; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
   .day.locked { background: #fafafc; }
   .day.locked .head, .day.locked .holiday { opacity: 0.35; }
-  .head { display: flex; align-items: center; gap: 8px; height: 40px; }
+  .head { display: flex; align-items: center; gap: 8px; height: 40px; flex: none; }
+  /* 일정이 많으면 이 안에서 스크롤 */
+  .list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .list::-webkit-scrollbar { display: none; }
   .num { min-width: 40px; height: 40px; padding: 0 6px; display: flex; align-items: center; justify-content: center; border-radius: 20px; font-size: 22px; font-weight: 600; }
   .num.today { background: var(--text); color: #fff; }
   .dow { font-size: 15px; font-weight: 500; color: var(--text-2); }
   .plus { margin-left: auto; width: 44px; height: 44px; margin-right: -8px; border: 0; border-radius: 22px; background: transparent; color: var(--text-3); display: flex; align-items: center; justify-content: center; }
-  .holiday { font-size: 13px; color: var(--red); padding-left: 4px; }
+  .holiday { font-size: 13px; color: var(--red); padding-left: 4px; flex: none; }
   .card {
     display: flex; flex-direction: column; gap: 1px; min-height: 48px; padding: 6px 10px; border: 0; border-radius: 10px;
     background: var(--bg); color: var(--fg); text-align: left; flex: none;
