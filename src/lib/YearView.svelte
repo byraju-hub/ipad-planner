@@ -76,7 +76,7 @@
         {/each}
       </ul>
     </section>
-    <section class="panel memo"><h2>연간 메모</h2><p>펜슬로 화면 어디에나 쓸 수 있습니다.</p></section>
+    <section class="panel memo"><h2>연간 메모</h2></section>
   </aside>
 
   <InkLayer pageKey={`year:${year}`} />
@@ -117,7 +117,6 @@
     height: 220px; flex: none; padding-bottom: 16px;
     background-image: radial-gradient(#d1d1d6 1px, transparent 1px); background-size: 20px 20px; background-position: 10px 10px;
   }
-  .memo p { margin: 6px 0 0; font-size: 13px; color: var(--text-3); }
 
   @media (max-width: 1000px) {
     .layout { flex-direction: column; }
