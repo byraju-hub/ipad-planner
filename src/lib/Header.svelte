@@ -69,7 +69,7 @@
       <button class="icon press" class:on={tool.finger} aria-label="손가락으로도 쓰기" aria-pressed={tool.finger}
         title="손가락·마우스로도 쓰기 (애플 펜슬은 항상 쓰기)" onclick={() => setTool({ finger: !tool.finger })}><Icon name="touch" /></button>
     </div>
-    <button class="sync" aria-label={syncLabel} title={syncLabel} onclick={openSettings}><span class={syncTone}></span></button>
+    <div class="sync" role="status" aria-label={syncLabel} title={syncLabel}><span class={syncTone}></span></div>
     <button class="add press" aria-label="일정 추가" onclick={() => openEvent(null, defaultDate(view, key))}><Icon name="plus" size={18} /></button>
     <button class="icon press" aria-label="설정" onclick={openSettings}><Icon name="gear" /></button>
   </div>
