@@ -107,3 +107,8 @@ test('Weekly로 바꾸면 금요일까지는 이번 주, 토요일부터는 다�
   // 월간·연간으로는 오늘 기준
   assert.equal(switchKey('week', 'month', '2027-01-10', '2027-01-09'), '2027-01-09');
 });
+
+test('연간·월간 제목: 2026. / 2026.11', () => {
+  assert.deepEqual(periodTitle('year', '2027-01-01'), { main: '2027.', sub: '' });
+  assert.deepEqual(periodTitle('month', '2026-11-01'), { lead: '2026.', main: '11', sub: '' });
+});

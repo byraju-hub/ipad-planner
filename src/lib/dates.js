@@ -118,8 +118,9 @@ export function switchKey(from, to, key, t = today()) {
 
 export function periodTitle(view, key) {
   const { y, m } = parseKey(key);
-  if (view === 'year') return { main: `${y}년`, sub: '' };
-  if (view === 'month') return { main: `${y}년 ${m}월`, sub: '' };
+  if (view === 'year') return { main: `${y}.`, sub: '' };
+  // 월간: '2026.11' (연도는 작고 회색인 lead)
+  if (view === 'month') return { lead: `${y}.`, main: String(m), sub: '' };
   const { start, end } = periodRange('week', key);
   const a = parseKey(start);
   const b = parseKey(end);

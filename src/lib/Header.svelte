@@ -33,7 +33,7 @@
 <header>
   <div class="left">
     <h1>
-      {title.main}
+      <span>{#if title.lead}<span class="sub">{title.lead}</span>{/if}{title.main}</span>
       {#if title.sub}<span class="sub">{title.sub}</span>{/if}
     </h1>
     <button class="icon press" aria-label={`이전 ${label[view]}`} disabled={!prevOk}
