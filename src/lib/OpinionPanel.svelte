@@ -103,15 +103,15 @@
   ul { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; }
   li { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-top: 1px solid #f2f2f7; }
   li.empty { color: var(--text-3); font-size: 14px; min-height: 46px; justify-content: center; }
-  .body { min-height: 44px; border: 0; background: transparent; padding: 0; text-align: left; font-size: 15px; line-height: 21px; }
+  .body { min-height: 44px; border: 0; background: transparent; padding: 0; text-align: left; font-size: 14px; line-height: 20px; }
   .meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .from { font-size: 12px; color: var(--text-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .badge { min-height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: var(--bg); color: var(--fg); font-size: 12px; font-weight: 500; flex: none; }
-  .addbtn { min-height: 46px; border: 0; border-top: 1px solid #f2f2f7; background: transparent; text-align: left; padding: 0; font-size: 15px; color: var(--blue); }
+  .addbtn { min-height: 46px; border: 0; border-top: 1px solid #f2f2f7; background: transparent; text-align: left; padding: 0; font-size: 14px; color: var(--blue); }
   .edit { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
   .edit.add { border-top: 1px solid #f2f2f7; }
   .edit textarea, .edit input {
-    width: 100%; border: 1px solid #d1d1d6; border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 15px;
+    width: 100%; border: 1px solid #d1d1d6; border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 14px;
     color: var(--text); background: var(--surface); resize: none;
   }
   .edit input { min-height: 42px; }
