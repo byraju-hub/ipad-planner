@@ -16,8 +16,9 @@
     <circle cx="11" cy="11" r="6.5" />
     <circle cx="11" cy="11" r="1.6" />
   {:else if name === 'gear'}
-    <circle cx="11" cy="11" r="3" />
-    <path d="M11 2.5v2.5M11 17v2.5M2.5 11H5M17 11h2.5M5 5l1.8 1.8M15.2 15.2L17 17M5 17l1.8-1.8M15.2 6.8L17 5" />
+    <path d="M3.5 6h6M14.5 6h4M3.5 16h2M10.5 16h8" />
+    <circle cx="12" cy="6" r="2.5" />
+    <circle cx="8" cy="16" r="2.5" />
   {:else if name === 'plus'}
     <path d="M11 4.5v13M4.5 11h13" />
   {:else if name === 'left'}
