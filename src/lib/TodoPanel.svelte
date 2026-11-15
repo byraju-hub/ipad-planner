@@ -80,7 +80,7 @@
 </section>
 
 <style>
-  .panel { display: flex; flex-direction: column; min-height: 0; }
+  .panel { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; }
   header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
   h2 { margin: 0; font-size: 17px; font-weight: 600; }
   .count { font-size: 13px; color: var(--text-2); }
