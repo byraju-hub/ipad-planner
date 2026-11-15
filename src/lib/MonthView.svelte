@@ -16,7 +16,7 @@
   let grid = $derived(monthCells(ym.y, ym.m));
   let range = $derived(periodRange('month', key));
   let dayMap = $derived(buildDayMap(data.events, grid.cells[0].key, grid.cells.at(-1).key));
-  let maxChips = $derived(grid.rows >= 6 ? 3 : 4);
+  const MAX_CHIPS = 3; // 한 칸에는 3개까지만 보이고 나머지는 '+ 외 N개'
   let now = today();
   let pageKey = $derived(`month:${ym.y}-${String(ym.m).padStart(2, '0')}`);
 </script>
@@ -41,12 +41,12 @@
             {#if name}<span class="holiday">{name}</span>{/if}
           </div>
           <div class="chips">
-            {#each occs.slice(0, maxChips) as o (o.ev.id + o.day)}
+            {#each occs.slice(0, MAX_CHIPS) as o (o.ev.id + o.day)}
               {@const c = catOf(o.ev.category)}
               <button class="chip" style={`--bg:${c.bg};--fg:${c.fg}`} onclick={() => openEvent(o.ev, o.day)}>{occLabel(o)}</button>
             {/each}
-            {#if occs.length > maxChips}
-              <button class="more" onclick={() => go('week', cell.key)}>+{occs.length - maxChips}개</button>
+            {#if occs.length > MAX_CHIPS}
+              <button class="more" onclick={() => go('week', cell.key)}>+ 외 {occs.length - MAX_CHIPS}개</button>
             {/if}
           </div>
         </div>
