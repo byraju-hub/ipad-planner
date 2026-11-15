@@ -9,9 +9,9 @@
   let { view, key, go } = $props();
 
   const tabs = [
-    ['year', '연간'],
-    ['month', '월간'],
-    ['week', '주간'],
+    ['year', 'Yearly', '연간'],
+    ['month', 'Monthly', '월간'],
+    ['week', 'Weekly', '주간'],
   ];
   const label = { year: '해', month: '달', week: '주' };
   const widthIdx = $derived(WIDTHS.indexOf(tool.width));
@@ -40,12 +40,12 @@
       onclick={() => go(view, prevKey(view, key))}><Icon name="left" size={20} /></button>
     <button class="icon press" aria-label={`다음 ${label[view]}`}
       onclick={() => go(view, nextKey(view, key))}><Icon name="right" size={20} /></button>
-    <button class="today press" onclick={() => go(view, clampKey(today()))}>오늘</button>
+    <button class="today press" onclick={() => go(view, clampKey(today()))} aria-label="오늘">Today</button>
   </div>
 
   <nav aria-label="보기 전환">
-    {#each tabs as [id, name]}
-      <button class="tab press" class:active={view === id} aria-current={view === id ? 'page' : undefined}
+    {#each tabs as [id, name, ko]}
+      <button class="tab press" class:active={view === id} aria-label={ko} aria-current={view === id ? 'page' : undefined}
         onclick={() => go(id, switchKey(id, key))}>{name}</button>
     {/each}
   </nav>
@@ -70,7 +70,7 @@
         title="손가락·마우스로도 쓰기 (애플 펜슬은 항상 쓰기)" onclick={() => setTool({ finger: !tool.finger })}><Icon name="touch" /></button>
     </div>
     <button class="sync" aria-label={syncLabel} title={syncLabel} onclick={openSettings}><span class={syncTone}></span></button>
-    <button class="add press" onclick={() => openEvent(null, defaultDate(view, key))}><Icon name="plus" size={16} />일정</button>
+    <button class="add press" aria-label="일정 추가" onclick={() => openEvent(null, defaultDate(view, key))}><Icon name="plus" size={18} /></button>
     <button class="icon press" aria-label="설정" onclick={openSettings}><Icon name="gear" /></button>
   </div>
 </header>
@@ -96,11 +96,11 @@
 
   .today {
     height: 44px; padding: 0 16px; margin-left: 4px; border: 1px solid #d1d1d6;
-    border-radius: 22px; background: var(--surface); font-size: 15px; flex: none; white-space: nowrap;
+    border-radius: 22px; background: var(--surface); font-size: 13px; letter-spacing: 0.01em; flex: none; white-space: nowrap;
   }
 
   nav { display: flex; gap: 4px; padding: 4px; background: var(--fill); border-radius: 24px; }
-  .tab { min-width: 76px; height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; font-size: 15px; color: var(--text-2); }
+  .tab { min-width: 76px; height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; font-size: 13px; letter-spacing: 0.01em; color: var(--text-2); }
   .tab.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
 
   .right { display: flex; align-items: center; justify-content: flex-end; gap: 2px; min-width: 0; }
@@ -118,9 +118,9 @@
   .sync .bad { background: var(--red); }
 
   .add {
-    height: 44px; padding: 0 16px; margin: 0 4px 0 6px; border: 0; border-radius: 22px;
-    background: var(--text); color: #fff; font-size: 15px; font-weight: 600;
-    display: flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
+    width: 44px; height: 44px; padding: 0; margin: 0 4px 0 6px; border: 0; border-radius: 22px;
+    background: var(--text); color: #fff;
+    display: flex; align-items: center; justify-content: center; flex: none; white-space: nowrap;
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -140,9 +140,9 @@
     .sub { font-size: 13px; }
     .left { gap: 2px; }
     .icon { width: 38px; }
-    .today { padding: 0 12px; margin-left: 2px; font-size: 14px; }
+    .today { padding: 0 12px; margin-left: 2px; font-size: 13px; }
     .tab { min-width: 64px; }
-    .add { padding: 0 12px; margin: 0 2px 0 4px; }
+    .add { margin: 0 2px 0 4px; }
     .dot { width: 34px; }
   }
 </style>
