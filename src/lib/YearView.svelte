@@ -67,8 +67,7 @@
           <li>
             <button class="row press" onclick={() => openEvent(o.ev, o.day)}>
               <span class="when">{fmt(o.day)}</span>
-              <span class="bar" style={`background:${c.fg}`}></span>
-              <span class="name">{occLabel(o)}</span>
+              <span class="name" style={`--bg:${c.bg};--fg:${c.fg}`}>{occLabel(o)}</span>
             </button>
           </li>
         {:else}
@@ -111,8 +110,10 @@
   li.empty { min-height: 46px; display: flex; align-items: center; color: var(--text-3); font-size: 14px; }
   .row { width: 100%; min-height: 46px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; gap: 10px; text-align: left; }
   .when { width: 44px; flex: none; font-size: 14px; color: var(--text-2); }
-  .bar { width: 3px; height: 20px; border-radius: 2px; flex: none; }
-  .name { font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .name {
+    flex: 1; min-width: 0; padding: 3px 8px; border-radius: 7px; background: var(--bg); color: var(--fg);
+    font-size: 14px; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .memo {
     height: 220px; flex: none; padding-bottom: 16px;
     background-image: radial-gradient(#d1d1d6 1px, transparent 1px); background-size: 20px 20px; background-position: 10px 10px;
