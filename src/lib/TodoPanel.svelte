@@ -3,7 +3,7 @@
   import Icon from './Icon.svelte';
   import { scrollable } from './scrollable.js';
   import PickerField from './PickerField.svelte';
-  import { parseKey } from './dates.js';
+  import { parseKey, makeKey } from './dates.js';
 
   // range: 이 기간에 기한이 있는 할 일 + 기한 없는 미완료 할 일을 보여준다
   let { title = '할 일', range } = $props();
@@ -12,12 +12,40 @@
   let editId = $state(null);
   let edit = $state(null);
 
-  const items = $derived(
+  // 완료 항목 숨기기(기기에 저장)
+  let hideDone = $state(
+    (() => {
+      try {
+        return localStorage.getItem('ip-hide-done') === '1';
+      } catch {
+        return false;
+      }
+    })(),
+  );
+  function toggleHide() {
+    hideDone = !hideDone;
+    try {
+      localStorage.setItem('ip-hide-done', hideDone ? '1' : '0');
+    } catch {
+      /* 저장 불가 환경 */
+    }
+  }
+
+  // 기한이 없는 완료 항목은 완료한 날이 속한 기간에 남는다(안 그러면 모든 기간에 계속 쌓인다)
+  const doneKey = (t) => {
+    if (!t.done_at) return '';
+    const d = new Date(t.done_at);
+    return makeKey(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  };
+  const inRange = (k) => k >= range.start && k <= range.end;
+
+  const all = $derived(
     data.todos
-      .filter((t) => (t.due ? t.due >= range.start && t.due <= range.end : !t.done))
+      .filter((t) => (t.due ? inRange(t.due) : t.done ? inRange(doneKey(t)) : true))
       .sort((a, b) => a.done - b.done || (a.due || '9999').localeCompare(b.due || '9999') || a.sort - b.sort),
   );
-  const doneCount = $derived(items.filter((t) => t.done).length);
+  const doneCount = $derived(all.filter((t) => t.done).length);
+  const items = $derived(hideDone ? all.filter((t) => !t.done) : all);
 
   const dueLabel = (d) => (d ? `${parseKey(d).m}/${parseKey(d).d}` : '');
 
@@ -46,7 +74,12 @@
 <section class="panel">
   <header>
     <h2>{title}</h2>
-    <span class="count">{items.length ? `${items.length}개 중 ${doneCount}개 완료` : ''}</span>
+    <span class="right">
+      <span class="count">{all.length ? `${all.length}개 중 ${doneCount}개 완료` : ''}</span>
+      {#if doneCount > 0}
+        <button class="toggle press" aria-pressed={hideDone} onclick={toggleHide}>{hideDone ? '완료 보기' : '완료 숨기기'}</button>
+      {/if}
+    </span>
   </header>
   <ul use:scrollable>
     {#each items as t (t.id)}
@@ -71,7 +104,7 @@
         {/if}
       </li>
     {:else}
-      <li class="empty">할 일이 없습니다.</li>
+      <li class="empty">{all.length ? '모두 완료했습니다.' : '할 일이 없습니다.'}</li>
     {/each}
   </ul>
   <form class="add" onsubmit={add}>
@@ -83,7 +116,9 @@
   .panel { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; }
   header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
   h2 { margin: 0; font-size: 17px; font-weight: 600; }
+  .right { display: flex; align-items: baseline; gap: 10px; }
   .count { font-size: 13px; color: var(--text-2); }
+  .toggle { min-height: 32px; padding: 0 10px; border: 0; border-radius: 16px; background: var(--fill); color: var(--blue); font-size: 13px; }
   ul { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; }
   li { display: flex; align-items: center; gap: 10px; min-height: 46px; border-top: 1px solid #f2f2f7; }
   li.empty { color: var(--text-3); font-size: 14px; }
