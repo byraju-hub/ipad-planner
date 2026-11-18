@@ -50,6 +50,9 @@ function db()
             PDO::ATTR_EMULATE_PREPARES => false,
         ]
     );
+    // 옛 구조(한 사람용)면 한 번만 새 구조로 바꾼다
+    require_once __DIR__ . '/_migrate.php';
+    ip_ensure_schema($pdo);
     return $pdo;
 }
 
@@ -153,15 +156,15 @@ function set_session_cookie($value, $expires)
     header('Set-Cookie: ' . implode('; ', $attrs), false);
 }
 
-function create_session()
+function create_session($userId)
 {
     $token = bin2hex(random_bytes(32));
     $csrf = bin2hex(random_bytes(16));
     $exp = time() + IP_SESSION_DAYS * 86400;
     $pdo = db();
     $pdo->prepare('DELETE FROM ip_sessions WHERE expires < ?')->execute([time()]);
-    $pdo->prepare('INSERT INTO ip_sessions (id, csrf, expires) VALUES (?, ?, ?)')
-        ->execute([hash('sha256', $token), $csrf, $exp]);
+    $pdo->prepare('INSERT INTO ip_sessions (id, csrf, expires, user_id) VALUES (?, ?, ?, ?)')
+        ->execute([hash('sha256', $token), $csrf, $exp, (int) $userId]);
     set_session_cookie($token, $exp);
     return $csrf;
 }
@@ -172,7 +175,12 @@ function current_session()
     if (!is_string($t) || !preg_match('/^[a-f0-9]{64}$/', $t)) {
         return null;
     }
-    $st = db()->prepare('SELECT id, csrf, expires FROM ip_sessions WHERE id = ? AND expires > ?');
+    // 사용을 막은 사용자의 로그인은 바로 무효가 된다
+    $st = db()->prepare(
+        'SELECT s.id, s.csrf, s.expires, s.user_id, u.username, u.display_name, u.is_admin
+         FROM ip_sessions s JOIN ip_users u ON u.id = s.user_id
+         WHERE s.id = ? AND s.expires > ? AND u.disabled = 0'
+    );
     $st->execute([hash('sha256', $t), time()]);
     $row = $st->fetch();
     return $row ?: null;
@@ -198,6 +206,46 @@ function require_auth($write = false)
         }
     }
     return $s;
+}
+
+// 관리자만. 사용자 관리에 쓴다.
+function require_admin($write = false)
+{
+    $s = require_auth($write);
+    if ((int) $s['is_admin'] !== 1) {
+        json_out(['error' => 'forbidden'], 403);
+    }
+    return $s;
+}
+
+// ---- 사용자 ----
+
+const IP_USERNAME_RE = '/^[a-z0-9][a-z0-9_.-]{1,29}$/';
+
+function user_out($u)
+{
+    return [
+        'id' => (int) $u['id'],
+        'username' => $u['username'],
+        'display_name' => $u['display_name'],
+        'is_admin' => (int) $u['is_admin'],
+    ];
+}
+
+function user_find_by_name($name)
+{
+    $st = db()->prepare('SELECT * FROM ip_users WHERE username = ?');
+    $st->execute([$name]);
+    $r = $st->fetch();
+    return $r ?: null;
+}
+
+function user_create($username, $displayName, $password, $isAdmin)
+{
+    $pdo = db();
+    $pdo->prepare('INSERT INTO ip_users (username, display_name, pass_hash, ics_token, is_admin, disabled, created) VALUES (?, ?, ?, ?, ?, 0, ?)')
+        ->execute([$username, $displayName, password_hash($password, PASSWORD_DEFAULT), bin2hex(random_bytes(24)), $isAdmin ? 1 : 0, now_ms()]);
+    return (int) $pdo->lastInsertId();
 }
 
 function require_post_json()

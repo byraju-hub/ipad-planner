@@ -10,5 +10,5 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(`${stamp} (한국 시간)`) },
   base: './',
   // 개발 서버에서만: 가짜 서버(scripts/mock-api.mjs)가 켜져 있으면 /api 를 그쪽으로 넘긴다
-  server: { proxy: process.env.MOCK_API ? { '/api': 'http://localhost:5175' } : undefined },
+  server: { proxy: process.env.MOCK_API ? { '/api': `http://localhost:${process.env.MOCK_PORT || 5175}` } : undefined },
 });

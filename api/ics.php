@@ -4,8 +4,13 @@ require __DIR__ . '/_lib.php';
 
 $bucket = 'ics:' . client_ip();
 $token = $_GET['token'] ?? '';
-$real = meta_get('ics_token');
-if (!is_string($token) || $real === null || !hash_equals($real, $token)) {
+$owner = null;
+if (is_string($token) && preg_match('/^[a-f0-9]{48}$/', $token)) {
+    $st = db()->prepare('SELECT id FROM ip_users WHERE ics_token = ? AND disabled = 0');
+    $st->execute([$token]);
+    $owner = $st->fetchColumn();
+}
+if ($owner === false || $owner === null) {
     // 틀린 토큰만 제한한다. 맞는 토큰은 차단하지 않는다.
     header('Content-Type: text/plain; charset=utf-8');
     if (attempts_locked($bucket) > 0) {
@@ -72,7 +77,9 @@ $lines = [
     'END:VTIMEZONE',
 ];
 
-$rows = db()->query('SELECT * FROM ip_events WHERE deleted = 0')->fetchAll();
+$st = db()->prepare('SELECT * FROM ip_events WHERE deleted = 0 AND user_id = ?');
+$st->execute([(int) $owner]);
+$rows = $st->fetchAll();
 $rrule = ['weekly' => 'FREQ=WEEKLY', 'monthly' => 'FREQ=MONTHLY', 'yearly' => 'FREQ=YEARLY'];
 foreach ($rows as $e) {
     $allDay = ((int) $e['all_day'] === 1) || $e['start_time'] === null;

@@ -3,8 +3,10 @@
 
 function ip_create_tables()
 {
+    require_once __DIR__ . '/_migrate.php';
     $opts = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
     $sql = [
+        ip_users_sql('ip_'),
         "CREATE TABLE IF NOT EXISTS ip_meta (
             meta_key VARCHAR(40) NOT NULL PRIMARY KEY,
             meta_value TEXT NOT NULL
@@ -13,6 +15,7 @@ function ip_create_tables()
             id CHAR(64) NOT NULL PRIMARY KEY,
             csrf CHAR(32) NOT NULL,
             expires BIGINT NOT NULL,
+            user_id INT NOT NULL DEFAULT 0,
             KEY idx_expires (expires)
         ) $opts",
         "CREATE TABLE IF NOT EXISTS ip_attempts (
@@ -23,6 +26,7 @@ function ip_create_tables()
         ) $opts",
         "CREATE TABLE IF NOT EXISTS ip_events (
             id VARCHAR(40) NOT NULL PRIMARY KEY,
+            user_id INT NOT NULL DEFAULT 0,
             title VARCHAR(200) NOT NULL,
             start_date CHAR(10) NOT NULL,
             end_date CHAR(10) NOT NULL,
@@ -36,10 +40,12 @@ function ip_create_tables()
             updated BIGINT NOT NULL,
             deleted TINYINT NOT NULL DEFAULT 0,
             synced_at BIGINT NOT NULL,
-            KEY idx_synced (synced_at)
+            KEY idx_synced (synced_at),
+            KEY idx_user_synced (user_id, synced_at)
         ) $opts",
         "CREATE TABLE IF NOT EXISTS ip_todos (
             id VARCHAR(40) NOT NULL PRIMARY KEY,
+            user_id INT NOT NULL DEFAULT 0,
             title VARCHAR(200) NOT NULL,
             due CHAR(10) NULL,
             done TINYINT NOT NULL DEFAULT 0,
@@ -48,10 +54,12 @@ function ip_create_tables()
             updated BIGINT NOT NULL,
             deleted TINYINT NOT NULL DEFAULT 0,
             synced_at BIGINT NOT NULL,
-            KEY idx_synced (synced_at)
+            KEY idx_synced (synced_at),
+            KEY idx_user_synced (user_id, synced_at)
         ) $opts",
         "CREATE TABLE IF NOT EXISTS ip_opinions (
             id VARCHAR(40) NOT NULL PRIMARY KEY,
+            user_id INT NOT NULL DEFAULT 0,
             content TEXT NOT NULL,
             source VARCHAR(100) NOT NULL,
             heard_on CHAR(10) NULL,
@@ -60,20 +68,27 @@ function ip_create_tables()
             updated BIGINT NOT NULL,
             deleted TINYINT NOT NULL DEFAULT 0,
             synced_at BIGINT NOT NULL,
-            KEY idx_synced (synced_at)
+            KEY idx_synced (synced_at),
+            KEY idx_user_synced (user_id, synced_at)
         ) $opts",
         "CREATE TABLE IF NOT EXISTS ip_ink (
-            page_key VARCHAR(40) NOT NULL PRIMARY KEY,
+            user_id INT NOT NULL DEFAULT 0,
+            page_key VARCHAR(40) NOT NULL,
             strokes MEDIUMTEXT NOT NULL,
             updated BIGINT NOT NULL,
             deleted TINYINT NOT NULL DEFAULT 0,
             synced_at BIGINT NOT NULL,
-            KEY idx_synced (synced_at)
+            PRIMARY KEY (user_id, page_key),
+            KEY idx_synced (synced_at),
+            KEY idx_user_synced (user_id, synced_at)
         ) $opts",
     ];
     foreach ($sql as $q) {
         db()->exec($q);
     }
+    // 새로 만든 표는 이미 최신 구조다
+    db()->prepare("INSERT INTO ip_meta (meta_key, meta_value) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)")
+        ->execute([(string) IP_SCHEMA_VERSION]);
 }
 
 // 동기화되는 데이터 종류와 필드 규칙
@@ -117,7 +132,7 @@ function ip_schema()
             ],
         ],
         'ink' => [
-            'table' => 'ip_ink', 'key' => 'page_key',
+            'table' => 'ip_ink', 'key' => 'page_key', 'scoped' => true,
             'key_re' => '/^(year:\d{4}|month:\d{4}-\d{2}|week:\d{4}-\d{2}-\d{2})$/',
             'fields' => [
                 'strokes' => ['json'],
@@ -175,7 +190,7 @@ function ip_clean($def, $v)
 }
 
 // 변경 1건 반영. 서버에 같거나 더 새로운 기록이 있으면 건너뛴다(성공으로 취급).
-function ip_apply($pdo, $def, $rec, $now)
+function ip_apply($pdo, $def, $rec, $now, $uid)
 {
     if (!is_array($rec)) {
         return false;
@@ -204,19 +219,30 @@ function ip_apply($pdo, $def, $rec, $now)
         $vals[$name] = $r[1];
     }
 
-    $st = $pdo->prepare("SELECT updated FROM {$def['table']} WHERE $key = ? FOR UPDATE");
-    $st->execute([$kv]);
-    $existing = $st->fetchColumn();
-    if ($existing !== false && (int) $existing >= $updated) {
-        return true;
+    // 손글씨는 (사용자, 페이지)가 기본 키. 나머지는 id 가 전체에서 유일하므로, 다른 사람의 기록이면 거절한다.
+    if (!empty($def['scoped'])) {
+        $st = $pdo->prepare("SELECT updated, user_id FROM {$def['table']} WHERE user_id = ? AND $key = ? FOR UPDATE");
+        $st->execute([$uid, $kv]);
+    } else {
+        $st = $pdo->prepare("SELECT updated, user_id FROM {$def['table']} WHERE $key = ? FOR UPDATE");
+        $st->execute([$kv]);
+    }
+    $existing = $st->fetch();
+    if ($existing !== false) {
+        if ((int) $existing['user_id'] !== (int) $uid) {
+            return false;
+        }
+        if ((int) $existing['updated'] >= $updated) {
+            return true;
+        }
     }
 
-    $cols = array_merge([$key], array_keys($vals), ['updated', 'deleted', 'synced_at']);
-    $params = array_merge([$kv], array_values($vals), [$updated, $deleted, $now]);
+    $cols = array_merge(['user_id', $key], array_keys($vals), ['updated', 'deleted', 'synced_at']);
+    $params = array_merge([(int) $uid, $kv], array_values($vals), [$updated, $deleted, $now]);
     $place = implode(',', array_fill(0, count($cols), '?'));
     $upd = [];
     foreach ($cols as $c) {
-        if ($c !== $key) {
+        if ($c !== $key && $c !== 'user_id') {
             $upd[] = "$c = VALUES($c)";
         }
     }

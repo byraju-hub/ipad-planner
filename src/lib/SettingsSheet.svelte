@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import Sheet from './Sheet.svelte';
+  import UsersPanel from './UsersPanel.svelte';
   import { api, ApiError } from './api.js';
   import { auth, logout } from './auth.svelte.js';
   import { sync, syncNow, pendingCount } from './sync.svelte.js';
@@ -98,6 +99,13 @@
 </script>
 
 <Sheet title="설정" onclose={closeSheet}>
+  {#if auth.user}
+    <section>
+      <h3>계정</h3>
+      <p class="status">{auth.user.display_name} <span class="note">({auth.user.username}){auth.user.is_admin ? ' · 관리자' : ''}</span></p>
+    </section>
+  {/if}
+
   <section>
     <h3>동기화</h3>
     <p class="status">{statusText}</p>
@@ -134,6 +142,10 @@
         <button class="btn press" type="submit" disabled={!cur || !next}>비밀번호 변경</button>
       </form>
     </section>
+  {/if}
+
+  {#if auth.status === 'in' && auth.user?.is_admin}
+    <UsersPanel />
   {/if}
 
   <section>

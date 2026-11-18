@@ -3,7 +3,8 @@
 require __DIR__ . '/_lib.php';
 require __DIR__ . '/_schema.php';
 
-require_auth(true);
+$auth = require_auth(true);
+$uid = (int) $auth['user_id'];
 $in = read_json();
 $since = max(0, (int) ($in['since'] ?? 0));
 $changes = (isset($in['changes']) && is_array($in['changes'])) ? $in['changes'] : [];
@@ -23,7 +24,7 @@ try {
             json_out(['error' => 'too_many'], 413);
         }
         foreach ($list as $rec) {
-            if (!ip_apply($pdo, $def, $rec, $now)) {
+            if (!ip_apply($pdo, $def, $rec, $now, $uid)) {
                 $rejected[] = [$name, is_array($rec) ? ($rec[$def['key']] ?? '') : ''];
             }
         }
@@ -38,8 +39,8 @@ try {
 
 $out = ['now' => $now, 'rejected' => $rejected];
 foreach (ip_schema() as $name => $def) {
-    $st = $pdo->prepare("SELECT * FROM {$def['table']} WHERE synced_at >= ? ORDER BY synced_at");
-    $st->execute([$since]);
+    $st = $pdo->prepare("SELECT * FROM {$def['table']} WHERE user_id = ? AND synced_at >= ? ORDER BY synced_at");
+    $st->execute([$uid, $since]);
     $rows = [];
     foreach ($st->fetchAll() as $row) {
         $rows[] = ip_row_out($def, $row);

@@ -82,7 +82,7 @@ try {
     console.log('설치 응답:', res.status, body);
     if (res.ok) {
       writeFileSync('.admin-password.txt', password + '\n');
-      console.log('관리자 비밀번호를 .admin-password.txt 에 저장했습니다(Git 제외).');
+      console.log('관리자 계정(아이디 admin)의 비밀번호를 .admin-password.txt 에 저장했습니다(Git 제외).');
     }
     try { await client.remove(`${REMOTE}/api/setup.php`); console.log('setup.php 삭제 확인'); } catch { console.log('setup.php 는 이미 삭제됨'); }
   }
