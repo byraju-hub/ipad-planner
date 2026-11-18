@@ -14,7 +14,7 @@
   <header class="hero">
     <nav class="top">
       <span class="brand">아이패드 웹앱 플래너</span>
-      <a class="open" href="https://byraju.mycafe24.com/ip/?demo">플래너 열기</a>
+      <span class="navlinks"><a class="textlink" href="#install">설치 방법</a><a class="open" href="https://byraju.mycafe24.com/ip/?demo">데모 보기</a></span>
     </nav>
 
     <div class="hero-body">
@@ -29,8 +29,8 @@
       <h1>한 해의 일정을 한눈에,<br />펜슬로 바로 적는 플래너</h1>
       <p class="lead">아이패드 홈 화면에 올려 앱처럼 쓰는 개인 플래너입니다. 일정·할 일·메모를 한곳에서 관리하고, 화면 위에 애플 펜슬로 손글씨를 남깁니다.</p>
       <div class="cta">
-        <a class="btn solid" href="https://byraju.mycafe24.com/ip/?demo">플래너 열기</a>
-        <a class="btn ghost" href="#views">특징 보기</a>
+        <a class="btn solid" href="https://byraju.mycafe24.com/ip/?demo">데모 보기</a>
+        <a class="btn ghost" href="#install">설치 방법</a>
       </div>
     </div>
   </header>
@@ -118,18 +118,50 @@
       </div>
     </section>
 
-    <section class="sec">
+    <section id="install" class="sec">
       <div class="head reveal">
-        <h2>홈 화면에 올려서 쓰기</h2>
-        <p>앱스토어 없이 Safari에서 바로 설치합니다.</p>
+        <h2>내 서버에 설치하고<br />아이패드에 올리기</h2>
+        <p>앱스토어에서 받는 앱이 아니라, 내 웹 호스팅에 올려 쓰는 웹앱입니다.<br />서버에 한 번 설치한 뒤 아이패드 홈 화면에 아이콘으로 추가합니다.</p>
       </div>
-      <ol class="steps">
-        <li class="reveal" style="--i:0"><span class="n">1</span><div><b>Safari로 열기</b><p>아이패드 Safari에서 플래너 주소를 엽니다.</p></div></li>
+
+      <div class="cta center reveal dl">
+        <a class="btn solid dark" href="https://github.com/byraju-hub/ipad-planner/archive/refs/heads/main.zip">설치 파일 받기 (ZIP)</a>
+        <a class="btn outline" href="https://github.com/byraju-hub/ipad-planner">GitHub에서 보기</a>
+      </div>
+
+      <h3 class="sub reveal">1. 내 서버에 설치하기 <small>처음 한 번만</small></h3>
+      <div class="need reveal">
+        <b>준비물</b>
+        <ul>
+          <li>PHP 8 이상과 MySQL(MariaDB)을 쓸 수 있는 웹 호스팅 (예: cafe24)</li>
+          <li>호스팅의 FTP 접속 정보와 데이터베이스 이름·아이디·비밀번호</li>
+          <li>내 컴퓨터에 설치된 Node.js 22 이상</li>
+        </ul>
+      </div>
+      <ol class="steps wide">
+        <li class="reveal"><span class="n">1</span><div><b>압축 풀고 준비하기</b><p>위에서 받은 ZIP의 압축을 풀고, 그 폴더에서 터미널을 열어 아래 명령을 실행합니다.</p><pre class="code">npm install</pre></div></li>
+        <li class="reveal"><span class="n">2</span><div><b>접속 정보 파일 만들기</b><p>폴더 안에 <code>.env.deploy</code> 파일을 만들고 내 호스팅 값으로 채웁니다. 이 파일은 Git에 올라가지 않으니 비밀번호가 공개되지 않습니다.</p><pre class="code">FTP_HOST=ftp.내도메인.com
+FTP_USER=내FTP아이디
+FTP_PASS=내FTP비밀번호
+DB_HOST=localhost
+DB_NAME=내DB이름
+DB_USER=내DB아이디
+DB_PASS=내DB비밀번호
+SITE_URL=https://내도메인.com/ip/
+REMOTE_DIR=/www/ip</pre></div></li>
+        <li class="reveal"><span class="n">3</span><div><b>설치하기</b><p>화면을 만들어 서버에 올리고, 데이터베이스 표를 만들고, 관리자 비밀번호를 발급합니다. 비밀번호는 폴더의 <code>.admin-password.txt</code>에 저장됩니다.</p><pre class="code">npm run deploy -- --setup</pre></div></li>
+        <li class="reveal"><span class="n">4</span><div><b>로그인해서 확인하기</b><p><code>SITE_URL</code> 주소를 브라우저로 열고 발급된 관리자 비밀번호로 로그인합니다. 로그인한 뒤 설정에서 비밀번호를 바꾸세요.</p></div></li>
+      </ol>
+      <p class="after reveal">나중에 고친 내용을 서버에 반영할 때는 <code>npm run deploy</code>만 실행하면 됩니다.</p>
+
+      <h3 class="sub reveal">2. 아이패드 홈 화면에 올리기</h3>
+      <ol class="steps wide">
+        <li class="reveal" style="--i:0"><span class="n">1</span><div><b>Safari로 열기</b><p>아이패드 Safari에서 내 플래너 주소를 열고 로그인합니다.</p></div></li>
         <li class="reveal" style="--i:1"><span class="n">2</span><div><b>공유 → 홈 화면에 추가</b><p>공유 버튼을 누르고 “홈 화면에 추가”를 고릅니다.</p></div></li>
-        <li class="reveal" style="--i:2"><span class="n">3</span><div><b>아이콘으로 실행</b><p>홈 화면의 아이콘을 누르면 전체 화면 앱처럼 열립니다.</p></div></li>
+        <li class="reveal" style="--i:2"><span class="n">3</span><div><b>아이콘으로 실행</b><p>홈 화면의 아이콘을 누르면 주소창 없이 전체 화면 앱처럼 열립니다.</p></div></li>
       </ol>
       <div class="cta center reveal">
-        <a class="btn solid dark" href="https://byraju.mycafe24.com/ip/?demo">플래너 열기</a>
+        <a class="btn solid" href="https://byraju.mycafe24.com/ip/?demo">먼저 데모 보기</a>
       </div>
     </section>
   </main>
