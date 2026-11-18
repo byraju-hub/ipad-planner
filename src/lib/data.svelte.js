@@ -1,4 +1,4 @@
-// 앱 데이터(일정·할 일·의견·손글씨). 기기 안 저장소에 먼저 저장하고, 서버 동기화는 따로 한다.
+// 앱 데이터(일정·할 일·메모·손글씨). 기기 안 저장소에 먼저 저장하고, 서버 동기화는 따로 한다.
 import { getAll, get, put } from './idb.js';
 import { today } from './dates.js';
 
@@ -56,7 +56,7 @@ export const saveTodo = (t) => save('todos', data.todos, { ...t, deleted: 0 });
 export const removeTodo = (t) => save('todos', data.todos, { ...t, deleted: 1 });
 export const toggleTodo = (t) => saveTodo({ ...t, done: t.done ? 0 : 1, done_at: t.done ? null : Date.now() });
 
-// ---- 의견 ----
+// ---- 메모(코드에서는 opinion) ----
 export const newOpinion = () => ({
   id: uid(), content: '', source: '', heard_on: today(), status: 'new', memo: '', deleted: 0,
 });

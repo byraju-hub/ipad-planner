@@ -56,7 +56,7 @@
 
   <aside>
     <div class="panel todo"><TodoPanel title="할 일" {range} /></div>
-    <div class="panel opinion"><OpinionPanel title="의견" {range} /></div>
+    <div class="panel opinion"><OpinionPanel title="메모" {range} /></div>
   </aside>
 
   <InkLayer {pageKey} />

@@ -30,9 +30,9 @@ export const ALARMS = [
   ['1d', '하루 전'],
 ];
 
-// 의견 처리 상태. 누를 때마다 다음 상태로 넘어간다.
+// 메모 처리 상태. 누를 때마다 다음 상태로 넘어간다.
 export const OPINION_STATUS = [
-  { id: 'new', label: '새 의견', bg: '#E5F0FF', fg: '#004A9F' },
+  { id: 'new', label: '새 메모', bg: '#E5F0FF', fg: '#004A9F' },
   { id: 'review', label: '검토 중', bg: '#FFF1DF', fg: '#8A4500' },
   { id: 'done', label: '반영', bg: '#E8E8ED', fg: '#1D1D1F' },
   { id: 'hold', label: '보류', bg: '#F2F2F7', fg: '#636366' },

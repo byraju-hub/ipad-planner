@@ -5,8 +5,8 @@
   import { scrollable } from './scrollable.js';
   import PickerField from './PickerField.svelte';
 
-  // 처리 전(새 의견·검토 중)이거나 이 기간에 들은 의견을 보여준다
-  let { title = '의견', range } = $props();
+  // 처리 전(새 메모·검토 중)이거나 이 기간에 들은 메모를 보여준다
+  let { title = '메모', range } = $props();
 
   let adding = $state(false);
   let draft = $state({ content: '', source: '' });
@@ -60,7 +60,7 @@
       <li>
         {#if editId === o.id}
           <form class="edit" onsubmit={(e) => { e.preventDefault(); finishEdit(); }}>
-            <textarea aria-label="의견 내용" rows="3" bind:value={edit.content} maxlength="5000"></textarea>
+            <textarea aria-label="메모 내용" rows="3" bind:value={edit.content} maxlength="5000"></textarea>
             <input type="text" aria-label="들은 곳" placeholder="누가·어디서" bind:value={edit.source} maxlength="100" />
             <PickerField type="date" compact ariaLabel="들은 날짜" bind:value={edit.heard_on} />
             <div class="line">
@@ -78,12 +78,12 @@
         {/if}
       </li>
     {:else}
-      <li class="empty">기록한 의견이 없습니다.</li>
+      <li class="empty">기록한 메모가 없습니다.</li>
     {/each}
   </ul>
   {#if adding}
     <form class="edit add" onsubmit={add}>
-      <textarea aria-label="의견 내용" rows="3" placeholder="들은 의견" bind:value={draft.content} maxlength="5000"></textarea>
+      <textarea aria-label="메모 내용" rows="3" placeholder="들은 내용" bind:value={draft.content} maxlength="5000"></textarea>
       <input type="text" aria-label="들은 곳" placeholder="누가·어디서" bind:value={draft.source} maxlength="100" />
       <div class="line">
         <button type="button" class="link press" onclick={() => (adding = false)}>취소</button>
@@ -91,7 +91,7 @@
       </div>
     </form>
   {:else}
-    <button class="addbtn press" onclick={() => (adding = true)}>+ 의견 기록</button>
+    <button class="addbtn press" onclick={() => (adding = true)}>+ 메모 기록</button>
   {/if}
 </section>
 
