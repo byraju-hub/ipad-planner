@@ -17,9 +17,10 @@
   import { data, loadAll } from './lib/data.svelte.js';
   import { syncNow } from './lib/sync.svelte.js';
   import { ui } from './lib/ui.svelte.js';
+  import { isDemo } from './lib/demo.js';
 
   let route = $state(parseHash(location.hash));
-  const usable = $derived(auth.status === 'in' || auth.status === 'offline' || auth.status === 'local');
+  const usable = $derived(auth.status === 'in' || auth.status === 'offline' || auth.status === 'local' || auth.status === 'demo');
 
   // 화면이 들어오는 방향(1: 오른쪽에서, -1: 왼쪽에서)
   let dir = $state(1);
@@ -76,7 +77,7 @@
   });
 
   onMount(() => {
-    checkAuth();
+    if (!isDemo) checkAuth(); // 데모는 로그인·서버 없이 샘플 데이터로 연다(main.js)
     const onHash = () => {
       const next = parseHash(location.hash);
       if (next.view === route.view) dir = next.key >= route.key ? 1 : -1;

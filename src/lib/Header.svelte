@@ -4,6 +4,7 @@
   import { openEvent, openSettings, defaultDate } from './ui.svelte.js';
   import { sync } from './sync.svelte.js';
   import { auth } from './auth.svelte.js';
+  import { isDemo } from './demo.js';
   import Icon from './Icon.svelte';
 
   let { view, key, go } = $props();
@@ -69,9 +70,13 @@
       <button class="icon press" class:on={tool.finger} aria-label="손가락으로도 쓰기" aria-pressed={tool.finger}
         title="손가락·마우스로도 쓰기 (애플 펜슬은 항상 쓰기)" onclick={() => setTool({ finger: !tool.finger })}><Icon name="touch" /></button>
     </div>
-    <div class="sync" role="status" aria-label={syncLabel} title={syncLabel}><span class={syncTone}></span></div>
+    {#if isDemo}
+      <a class="demo press" href="../intro/" aria-label="데모 종료, 소개 페이지로" title="샘플 데이터입니다. 저장되지 않아요">DEMO · 나가기</a>
+    {:else}
+      <div class="sync" role="status" aria-label={syncLabel} title={syncLabel}><span class={syncTone}></span></div>
+    {/if}
     <button class="add press" aria-label="일정 추가" onclick={() => openEvent(null, defaultDate(view, key))}><Icon name="plus" size={18} /></button>
-    <button class="icon press" aria-label="설정" onclick={openSettings}><Icon name="gear" /></button>
+    {#if !isDemo}<button class="icon press" aria-label="설정" onclick={openSettings}><Icon name="gear" /></button>{/if}
   </div>
 </header>
 
@@ -112,6 +117,7 @@
   .dot:nth-child(2) { color: #1f3fa6; }
   .dot:nth-child(3) { color: #d70015; }
 
+  .demo { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 16px; background: #fff1f0; color: var(--red); font-size: 12px; font-weight: 600; white-space: nowrap; text-decoration: none; }
   .sync { width: 28px; height: 44px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
   .sync span { width: 9px; height: 9px; border-radius: 5px; background: #34c759; }
   .sync .warn { background: #ff9f0a; }

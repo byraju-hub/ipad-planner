@@ -6,6 +6,11 @@ const KEYS = { events: 'id', todos: 'id', opinions: 'id', ink: 'page_key', meta:
 const mem = Object.fromEntries(Object.keys(KEYS).map((s) => [s, new Map()]));
 let dbPromise = null;
 
+// 데모 모드: 기기 저장소를 열지 않고 메모리만 쓴다(실제 데이터와 섞이지 않게)
+export function useMemoryOnly() {
+  dbPromise = Promise.resolve(null);
+}
+
 function open() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve) => {
