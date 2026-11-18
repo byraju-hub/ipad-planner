@@ -71,7 +71,7 @@
         title="손가락·마우스로도 쓰기 (애플 펜슬은 항상 쓰기)" onclick={() => setTool({ finger: !tool.finger })}><Icon name="touch" /></button>
     </div>
     {#if isDemo}
-      <a class="demo press" href="../intro/" aria-label="데모 종료, 소개 페이지로" title="샘플 데이터입니다. 저장되지 않아요">DEMO · 나가기</a>
+      <a class="demo press" href="./intro/" aria-label="데모 종료, 소개 페이지로" title="샘플 데이터입니다. 저장되지 않아요">DEMO · 나가기</a>
     {:else}
       <div class="sync" role="status" aria-label={syncLabel} title={syncLabel}><span class={syncTone}></span></div>
     {/if}
