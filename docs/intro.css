@@ -164,11 +164,12 @@ code { padding: 1px 6px; border-radius: 6px; background: var(--bg); font: 0.9em 
 .steps b { font-size: 17px; }
 .steps p { color: var(--text-2); font-size: 15px; }
 
-footer { background: var(--ink); color: #8e8e93; text-align: center; padding: 44px 24px 48px; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+footer { background: var(--ink); color: #8e8e93; text-align: center; padding: 56px 24px 60px; font-size: 14px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; gap: 32px; }
 .f-title { color: #c7c7cc; }
 .f-title b { color: #fff; font-weight: 600; }
-.f-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 28px; font-weight: 600; }
-.f-links a { color: #e5e5ea; transition: color 0.2s; }
+.f-links { display: flex; flex-wrap: wrap; justify-content: center; row-gap: 14px; font-weight: 600; }
+.f-links a { color: #e5e5ea; padding: 2px 20px; line-height: 1.2; transition: color 0.2s; }
+.f-links a + a { border-left: 1px solid #636366; }
 .f-links a:hover, .f-copy a:hover { color: #fff; }
 .f-copy a { color: #c7c7cc; text-decoration: underline; text-underline-offset: 3px; }
 
