@@ -38,6 +38,22 @@
 | 가운데 | 달력과 일정 |
 | 옆·아래 | 할 일, 의견, 메모 |
 
+## 설치
+
+두 가지 방법이 있습니다.
+
+**1. 설치 파일로 설치 (Node.js 필요 없음)**
+1. [릴리스](https://github.com/byraju-hub/ipad-planner/releases/latest)에서 `ipad-planner.zip`을 받아 압축을 풉니다.
+2. 폴더 안의 모든 파일과 폴더를 PHP 8 이상, MySQL(MariaDB)을 쓸 수 있는 웹 호스팅에 FTP로 올립니다.
+3. 브라우저에서 올린 주소 뒤에 `install.php`를 붙여 열고, 데이터베이스 정보와 관리자 계정을 입력합니다. 끝나면 `install.php`는 저절로 지워집니다.
+
+새 버전으로 바꿀 때는 새 ZIP의 파일을 같은 폴더에 덮어 올리면 됩니다. 데이터는 그대로 유지됩니다.
+
+**2. 소스에서 직접 배포 (개발자용, Node.js 22 이상)**
+1. `npm install` 후 `.env.deploy`에 FTP·데이터베이스 정보를 적습니다(Git에 올라가지 않습니다).
+2. 처음에는 `npm run deploy -- --setup`, 이후에는 `npm run deploy`를 실행합니다.
+3. 설치 파일(ZIP)은 릴리스를 만들면 GitHub Actions가 자동으로 만들어 붙입니다. 로컬에서 확인하려면 `npm run package`를 실행합니다(`release/` 폴더에 생성).
+
 ## 사용 환경
 
 아이패드 Safari에서 열고 "홈 화면에 추가"를 하면 주소창 없이 앱처럼 실행됩니다. 2026년 11월부터 사용할 수 있고, 그 이후로는 끝 연도 제한이 없습니다.

@@ -1,7 +1,7 @@
 Options -Indexes
 
 # 내부 파일은 주소로 직접 열 수 없게 한다
-<FilesMatch "^(_lib|_schema|config)\.php$">
+<FilesMatch "^(_lib|_schema|_migrate|config)\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

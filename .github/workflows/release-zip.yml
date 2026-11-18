@@ -1,6 +1,7 @@
-# 릴리스를 만들면 소스 ZIP(ipad-planner.zip)을 자동으로 첨부한다.
+# 릴리스를 만들면 설치용 ZIP(ipad-planner.zip)을 빌드해서 자동으로 첨부한다.
+# 받는 사람은 Node.js 없이 압축을 풀어 FTP로 올리고, 브라우저에서 install.php 를 열면 설치된다.
 # 소개 페이지의 "설치 파일 받기"가 releases/latest/download/ipad-planner.zip 을 가리키므로 항상 최신 릴리스를 받게 된다.
-name: Attach source zip to release
+name: Attach install zip to release
 on:
   release:
     types: [published]
@@ -11,8 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build zip
-        run: git archive --format=zip --prefix=ipad-planner/ -o ipad-planner.zip "${{ github.event.release.tag_name }}"
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build install package
+        run: npm run package
+      - name: Zip
+        run: cd release && zip -r ../ipad-planner.zip ipad-planner && cd .. && unzip -l ipad-planner.zip | tail -30
       - name: Upload to release
         env:
           GH_TOKEN: ${{ github.token }}

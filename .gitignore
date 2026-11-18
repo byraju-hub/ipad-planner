@@ -5,3 +5,4 @@ dist/
 api/config.php
 *.log
 .admin-password.txt
+release/
