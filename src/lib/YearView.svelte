@@ -36,7 +36,7 @@
 </script>
 
 <div class="layout">
-  <section class="year">
+  <section class="year" data-ink-zone="main">
     {#each months as month (month.m)}
       <div class="month" class:locked={!month.usable}>
         <button class="title press" disabled={!month.usable} onclick={() => go('month', month.first)}>{month.m}월</button>
@@ -59,7 +59,7 @@
   </section>
 
   <aside>
-    <section class="panel list">
+    <section class="panel list" data-ink-zone="p1">
       <h2>올해 일정</h2>
       <ul use:scrollable>
         {#each upcoming as o (o.ev.id + o.day)}
@@ -75,7 +75,7 @@
         {/each}
       </ul>
     </section>
-    <section class="panel memo"><h2>연간 메모</h2></section>
+    <section class="panel memo" data-ink-zone="p2"><h2>연간 메모</h2></section>
   </aside>
 
   <InkLayer pageKey={`year:${year}`} />

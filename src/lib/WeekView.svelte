@@ -21,7 +21,7 @@
 </script>
 
 <div class="layout">
-  <section class="week">
+  <section class="week" data-ink-zone="main">
     {#each days as dayKey, col (dayKey)}
       {@const usable = dayKey >= MIN_DATE}
       {@const name = holidayName(dayKey)}
@@ -48,8 +48,8 @@
   </section>
 
   <div class="bottom">
-    <div class="panel todo"><TodoPanel title="이번 주 할 일" {range} /></div>
-    <div class="panel memo"><h2>메모</h2></div>
+    <div class="panel todo" data-ink-zone="p1"><TodoPanel title="이번 주 할 일" {range} /></div>
+    <div class="panel memo" data-ink-zone="p2"><h2>메모</h2></div>
   </div>
 
   <InkLayer {pageKey} />
@@ -94,6 +94,11 @@
 
   @media (max-width: 1000px) {
     .todo { width: 50%; }
+    /* 좁은 세로 화면: 일요일 칸에서 '주일'이 두 줄로 꺾이지 않게 줄인다 */
+    .head { gap: 4px; }
+    .num { min-width: 30px; height: 36px; padding: 0 4px; font-size: 19px; }
+    .dow { font-size: 12px; white-space: nowrap; }
+    .plus { width: 32px; }
     .card { padding: 5px 7px; }
     .title { font-size: 14px; }
   }

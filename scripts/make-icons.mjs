@@ -10,7 +10,11 @@ const DOT = [200, 200, 206];
 const RING = [29, 29, 31];
 
 // 한 점의 색(0~1 좌표). 바깥에서 안쪽 순서로 덮어 쓴다.
+// 달력 그림을 가운데 기준으로 키운다(다른 앱 아이콘과 같은 크기로 보이게). 1이면 예전 크기.
+const GROW = 1.26;
 function colorAt(x, y) {
+  x = (x - 0.5) / GROW + 0.5;
+  y = (y - 0.5) / GROW + 0.5;
   let c = BG;
   const inRound = (x0, y0, x1, y1, r) => {
     const cx = Math.min(Math.max(x, x0 + r), x1 - r);

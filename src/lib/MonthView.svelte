@@ -22,7 +22,7 @@
 </script>
 
 <div class="layout">
-  <section class="month">
+  <section class="month" data-ink-zone="main">
     <div class="dow">
       {#each DOW as name, col}
         <div class={col === 0 ? 'red' : col === 6 ? 'blue' : ''}>{name}</div>
@@ -55,8 +55,8 @@
   </section>
 
   <aside>
-    <div class="panel todo"><TodoPanel title="할 일" {range} /></div>
-    <div class="panel opinion"><OpinionPanel title="메모" {range} /></div>
+    <div class="panel todo" data-ink-zone="p1"><TodoPanel title="할 일" {range} /></div>
+    <div class="panel opinion" data-ink-zone="p2"><OpinionPanel title="메모" {range} /></div>
   </aside>
 
   <InkLayer {pageKey} />

@@ -5,12 +5,16 @@
   import { ui } from './ui.svelte.js';
   import { diag } from './diag.svelte.js';
 
-  // 부모 요소 전체에 손글씨를 쓴다. 좌표는 1366×1024 논리 좌표로 저장해 기기·방향이 달라도 칸에 맞는다.
+  // 부모 요소 전체에 손글씨를 쓴다.
+  // 저장 방식: 획이 시작된 '영역'(달력 / 첫째 패널 / 둘째 패널, 부모 안의 data-ink-zone)의 왼쪽 위 모서리를 기준으로,
+  // 가로 1366 단위인 논리 좌표(가로·세로 같은 배율)로 저장한다. 그래서 세로·가로로 돌려 칸의 크기와 위치가 달라져도
+  // 글씨가 그 칸을 따라가고, 모양이 찌그러지지 않는다. 영역 밖에서 시작한 획은 z='pg'(부모의 왼쪽 위 기준).
+  // z 가 없는 옛 획은 부모 전체 비율(가로 1366×세로 1024)로 저장된 것이다. 가로 화면에서 처음 열릴 때 새 방식으로 바꾼다.
   let { pageKey } = $props();
 
   const LW = 1366;
   const LH = 1024;
-    const ERASE_R = 14;
+  const ERASE_R = 14;
   const PEN_THRESHOLD = 1.5; // 펜슬: 이보다 덜 움직이면 '톡' 누른 것(클릭)으로 본다. 작은 글씨도 쓰이도록 작게
   const OTHER_THRESHOLD = 4; // 손가락·마우스
   // 먼지: 글씨 사이에 펜슬이 유리를 살짝 스칠 때 생기는 아주 짧고 약한 접촉은 획으로 남기지 않는다(논리 좌표 기준)
@@ -33,8 +37,10 @@
   const STITCH_MS = 250;
   let cw = 0;
   let ch = 0;
+  let zones = {}; // 영역 이름 → 부모 안에서의 왼쪽 위 위치(css px)
 
   const ctx = () => canvas.getContext('2d');
+  const round = (n, d) => Math.round(n * 10 ** d) / 10 ** d;
 
   // 펜슬은 압력 0도 '아주 약함'으로 본다(0.5로 바꾸면 스친 접촉이 보통 압력의 획이 된다)
   const pressureOf = (e) => (e.pressure > 0 ? e.pressure : e.pointerType === 'pen' ? 0.05 : 0.5);
@@ -54,7 +60,41 @@
   function widthOf(s, pressure) {
     return s.w * (0.5 + pressure) * (cw / LW);
   }
-  const px = (p) => [(p[0] / LW) * cw, (p[1] / LH) * ch];
+  const scale = () => cw / LW; // 논리 1단위가 몇 px 인가(가로·세로 같은 배율)
+
+  function measureZones() {
+    const hr = host.getBoundingClientRect();
+    const z = {};
+    for (const el of host.querySelectorAll('[data-ink-zone]')) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) z[el.dataset.inkZone] = { x: r.left - hr.left, y: r.top - hr.top, w: r.width, h: r.height };
+    }
+    zones = z;
+  }
+
+  // 그 점이 들어 있는 영역 이름(없으면 'pg'). x, y 는 부모 안의 css px
+  function zoneAt(x, y) {
+    for (const [name, r] of Object.entries(zones)) {
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return name;
+    }
+    return 'pg';
+  }
+
+  const originOf = (z) => zones[z] || { x: 0, y: 0 };
+
+  // 획의 점 → 부모 안의 css px
+  function px(p, s) {
+    if (!s.z) return [(p[0] / LW) * cw, (p[1] / LH) * ch]; // 옛 방식
+    const o = originOf(s.z);
+    const k = scale();
+    return [o.x + p[0] * k, o.y + p[1] * k];
+  }
+  // 부모 안의 css px → 그 영역 기준 논리 좌표
+  function toRel(x, y, z) {
+    const o = originOf(z);
+    const k = scale();
+    return [(x - o.x) / k, (y - o.y) / k];
+  }
 
   function drawSegment(c, s, i) {
     const p = s.p;
@@ -64,15 +104,15 @@
     c.lineWidth = widthOf(s, p[i][2]);
     c.beginPath();
     if (i === 0) {
-      const [x, y] = px(p[0]);
+      const [x, y] = px(p[0], s);
       c.moveTo(x, y);
       c.lineTo(x + 0.01, y);
     } else {
       const start = i === 1 ? p[0] : [(p[i - 1][0] + p[i - 2][0]) / 2, (p[i - 1][1] + p[i - 2][1]) / 2];
       const ctrl = p[i - 1];
       const end = [(p[i - 1][0] + p[i][0]) / 2, (p[i - 1][1] + p[i][1]) / 2];
-      c.moveTo(...px(start));
-      c.quadraticCurveTo(...px(ctrl), ...px(end));
+      c.moveTo(...px(start, s));
+      c.quadraticCurveTo(...px(ctrl, s), ...px(end, s));
     }
     c.stroke();
   }
@@ -84,13 +124,14 @@
     c.lineCap = 'round';
     c.lineWidth = widthOf(s, s.p[n - 1][2]);
     c.beginPath();
-    c.moveTo(...px([(s.p[n - 1][0] + s.p[n - 2][0]) / 2, (s.p[n - 1][1] + s.p[n - 2][1]) / 2]));
-    c.lineTo(...px(s.p[n - 1]));
+    c.moveTo(...px([(s.p[n - 1][0] + s.p[n - 2][0]) / 2, (s.p[n - 1][1] + s.p[n - 2][1]) / 2], s));
+    c.lineTo(...px(s.p[n - 1], s));
     c.stroke();
   }
 
   function redraw() {
     if (!canvas) return;
+    measureZones();
     const c = ctx();
     c.clearRect(0, 0, canvas.width, canvas.height);
     c.save();
@@ -114,7 +155,25 @@
     ch = r.height;
     canvas.width = Math.max(1, Math.round(cw * dpr));
     canvas.height = Math.max(1, Math.round(ch * dpr));
+    upgradeLegacy();
     redraw();
+  }
+
+  // 옛 획(z 없음)을 영역 기준 새 방식으로 바꾼다. 옛 획은 가로 화면에서 쓴 것으로 보고, 가로 화면일 때만 바꾼다
+  // (바꾸는 순간 화면에 보이던 자리 그대로 영역에 붙는다).
+  function upgradeLegacy() {
+    if (!host || !cw || !ch || cw <= ch || !strokes.some((s) => !s.z)) return;
+    measureZones();
+    const k = scale();
+    for (const s of strokes) {
+      if (s.z) continue;
+      const first = [(s.p[0][0] / LW) * cw, (s.p[0][1] / LH) * ch];
+      const z = zoneAt(first[0], first[1]);
+      const o = originOf(z);
+      s.p = s.p.map((q) => [round(((q[0] / LW) * cw - o.x) / k, 1), round(((q[1] / LH) * ch - o.y) / k, 1), q[2]]);
+      s.z = z;
+    }
+    scheduleSave();
   }
 
   // ---- 저장 ----
@@ -144,15 +203,19 @@
   }
 
   // ---- 입력 ----
-  function toLogical(e) {
+  // 포인터 위치 → 부모 안의 css px
+  function toCss(e) {
     const r = rect || host.getBoundingClientRect();
-    return [((e.clientX - r.left) / r.width) * LW, ((e.clientY - r.top) / r.height) * LH];
+    return [e.clientX - r.left, e.clientY - r.top];
   }
-  const round = (n, d) => Math.round(n * 10 ** d) / 10 ** d;
 
   function eraseAt(x, y) {
     const before = strokes.length;
-    strokes = strokes.filter((s) => !s.p.some((q) => Math.hypot(q[0] - x, q[1] - y) < ERASE_R));
+    const reach = ERASE_R * scale();
+    strokes = strokes.filter((s) => !s.p.some((q) => {
+      const [qx, qy] = px(q, s);
+      return Math.hypot(qx - x, qy - y) < reach;
+    }));
     if (strokes.length !== before) {
       edits++;
       redraw();
@@ -180,13 +243,16 @@
       lastMoveAt = 0;
     }
     rect = host.getBoundingClientRect(); // 쓰기 시작할 때 한 번만 잰다(움직일 때마다 재지 않는다)
-    const [x, y] = toLogical(e);
+    measureZones();
+    const [cx0, cy0] = toCss(e);
+    const z = zoneAt(cx0, cy0);
+    const [x, y] = toRel(cx0, cy0, z);
     const first = [round(x, 1), round(y, 1), round(pressureOf(e), 2)];
     const points = [first];
     let drawn = 1;
     let stitched = false;
     // 직전 획이 브라우저의 취소로 끊겼고 바로 이어 쓰는 거라면, 끊긴 끝점에서 이어 붙여 선이 끊겨 보이지 않게 한다
-    if (pen && lastCancelled && performance.now() - lastCancelled.at < STITCH_MS && lastCancelled.color === tool.color && lastCancelled.w === tool.width && tool.mode === 'pen') {
+    if (pen && lastCancelled && lastCancelled.z === z && performance.now() - lastCancelled.at < STITCH_MS && lastCancelled.color === tool.color && lastCancelled.w === tool.width && tool.mode === 'pen') {
       points.unshift(lastCancelled.pt);
       stitched = true;
       if (diag.on) diag.stitched++;
@@ -194,7 +260,7 @@
     lastCancelled = null;
     cur = {
       id: e.pointerId, cx: e.clientX, cy: e.clientY, started: false, threshold: pen ? PEN_THRESHOLD : OTHER_THRESHOLD, drawn,
-      stroke: { c: tool.color, w: tool.width, p: points, stitched },
+      stroke: { c: tool.color, w: tool.width, z, p: points, stitched },
     };
   }
 
@@ -202,14 +268,15 @@
   function addPoints(list) {
     if (tool.mode === 'eraser') {
       for (const e of list) {
-        const [x, y] = toLogical(e);
+        const [x, y] = toCss(e);
         eraseAt(x, y);
       }
       return;
     }
     const s = cur.stroke;
     for (const e of list) {
-      const [x, y] = toLogical(e);
+      const [cx, cy] = toCss(e);
+      const [x, y] = toRel(cx, cy, s.z);
       s.p.push([round(x, 1), round(y, 1), round(pressureOf(e), 2)]);
     }
     const c = ctx();
@@ -273,7 +340,7 @@
     if (!cur || e.pointerId !== cur.id) return;
     if (e.type === 'pointercancel' && e.pointerType === 'pen' && cur.started && tool.mode === 'pen') {
       const pts = cur.stroke.p;
-      lastCancelled = { at: performance.now(), pt: pts[pts.length - 1], color: cur.stroke.c, w: cur.stroke.w };
+      lastCancelled = { at: performance.now(), pt: pts[pts.length - 1], z: cur.stroke.z, color: cur.stroke.c, w: cur.stroke.w };
     }
     if (diag.on && e.pointerType === 'pen') {
       if (e.type === 'pointercancel') {
@@ -304,6 +371,7 @@
       const mine = strokes;
       strokes = s.concat(mine);
       loadedKey = key;
+      upgradeLegacy();
       syncUndo();
       redraw();
       scheduleSave();
@@ -311,6 +379,7 @@
     }
     strokes = s.filter((st) => !(st.p.length <= 4 && isDust(st)));
     loadedKey = key;
+    upgradeLegacy();
     syncUndo();
     redraw();
   }
