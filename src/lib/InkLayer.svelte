@@ -60,6 +60,7 @@
   function widthOf(s, pressure) {
     return s.w * (0.5 + pressure) * (cw / LW);
   }
+  const kLong = () => Math.max(cw, ch) / LW; // 기기의 긴 변 기준 배율(화면을 돌려도 같다)
   const scale = () => cw / LW; // 논리 1단위가 몇 px 인가(가로·세로 같은 배율)
 
   function measureZones() {
@@ -67,7 +68,7 @@
     const z = {};
     for (const el of host.querySelectorAll('[data-ink-zone]')) {
       const r = el.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) z[el.dataset.inkZone] = { x: r.left - hr.left, y: r.top - hr.top, w: r.width, h: r.height };
+      if (r.width > 0 && r.height > 0) z[el.dataset.inkZone] = { x: r.left - hr.left, y: r.top - hr.top, w: r.width, h: r.height, fy: el.hasAttribute('data-ink-fixy') };
     }
     zones = z;
   }
@@ -87,12 +88,21 @@
     if (!s.z) return [(p[0] / LW) * cw, (p[1] / LH) * ch]; // 옛 방식
     const o = originOf(s.z);
     const k = scale();
+    if (o.fy) {
+      const b = s.p[0];
+      return [o.x + p[0] * k, o.y + b[1] * kLong() + (p[1] - b[1]) * k];
+    }
     return [o.x + p[0] * k, o.y + p[1] * k];
   }
   // 부모 안의 css px → 그 영역 기준 논리 좌표
-  function toRel(x, y, z) {
+  function toRel(x, y, z, first) {
     const o = originOf(z);
     const k = scale();
+    if (o.fy) {
+      // 시작 위치의 세로는 기기 긴 변 기준(가로·세로 화면에서 같은 px), 글씨 모양은 가로 배율
+      if (!first) return [(x - o.x) / k, (y - o.y) / kLong()];
+      return [(x - o.x) / k, first[1] + (y - o.y - first[1] * kLong()) / k];
+    }
     return [(x - o.x) / k, (y - o.y) / k];
   }
 
@@ -276,7 +286,7 @@
     const s = cur.stroke;
     for (const e of list) {
       const [cx, cy] = toCss(e);
-      const [x, y] = toRel(cx, cy, s.z);
+      const [x, y] = toRel(cx, cy, s.z, s.p[0]);
       s.p.push([round(x, 1), round(y, 1), round(pressureOf(e), 2)]);
     }
     const c = ctx();

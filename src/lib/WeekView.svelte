@@ -21,7 +21,7 @@
 </script>
 
 <div class="layout">
-  <section class="week" data-ink-zone="main">
+  <section class="week" data-ink-zone="main" data-ink-fixy>
     {#each days as dayKey, col (dayKey)}
       {@const usable = dayKey >= MIN_DATE}
       {@const name = holidayName(dayKey)}
