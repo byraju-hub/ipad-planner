@@ -9,33 +9,20 @@ const RED = [215, 0, 21];
 const DOT = [200, 200, 206];
 const RING = [29, 29, 31];
 
-// 한 점의 색(0~1 좌표). 바깥에서 안쪽 순서로 덮어 쓴다.
-// 달력 그림을 가운데 기준으로 키운다(다른 앱 아이콘과 같은 크기로 보이게). 1이면 예전 크기.
-const GROW = 1.26;
+// 한 점의 색(0~1 좌표). 다른 앱 아이콘처럼 타일 전체를 채운다(어두운 바탕은 독에 묻혀 작아 보였음).
 function colorAt(x, y) {
-  x = (x - 0.5) / GROW + 0.5;
-  y = (y - 0.5) / GROW + 0.5;
-  let c = BG;
-  const inRound = (x0, y0, x1, y1, r) => {
-    const cx = Math.min(Math.max(x, x0 + r), x1 - r);
-    const cy = Math.min(Math.max(y, y0 + r), y1 - r);
-    return x >= x0 && x <= x1 && y >= y0 && y <= y1 && Math.hypot(x - cx, y - cy) <= r;
-  };
-  if (inRound(0.19, 0.2, 0.81, 0.8, 0.075)) {
-    c = PAGE;
-    if (y < 0.37) c = RED; // 윗부분
-    // 고리 두 개
-    for (const rx of [0.36, 0.64]) {
-      if (Math.hypot(x - rx, y - 0.2) <= 0.032) c = RING;
+  let c = PAGE;
+  if (y < 0.32) c = RED; // 윗부분
+  // 고리 두 개
+  for (const rx of [0.32, 0.68]) {
+    if (Math.hypot(x - rx, y - 0.15) <= 0.04) c = RING;
+  }
+  // 날짜 점 4 x 2
+  for (let col = 0; col < 4; col++) {
+    for (let row = 0; row < 2; row++) {
+      const d = Math.hypot(x - (0.2 + col * 0.2), y - (0.57 + row * 0.2));
+      if (d <= 0.06) c = col === 3 && row === 1 ? RED : DOT;
     }
-    // 날짜 점 4 x 2
-    for (let col = 0; col < 4; col++) {
-      for (let row = 0; row < 2; row++) {
-        if (Math.hypot(x - (0.305 + col * 0.13), y - (0.52 + row * 0.13)) <= 0.034) c = DOT;
-      }
-    }
-    // 오늘 표시(빨간 원)
-    if (Math.hypot(x - (0.305 + 3 * 0.13), y - (0.52 + 0.13)) <= 0.034) c = RED;
   }
   return c;
 }
